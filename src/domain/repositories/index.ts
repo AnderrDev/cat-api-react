@@ -1,1 +1,3 @@
-// Barrel export file - Add exports as modules are created
+export * from './PaymentRepository';
+export * from './CatRepository';
+export * from './StorageRepository';

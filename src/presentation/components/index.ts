@@ -1,1 +1,1 @@
-// Barrel export file - Add exports as modules are created
+export { CatCard } from './CatCard';
