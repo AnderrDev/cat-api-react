@@ -1,13 +1,18 @@
-import { CatRepository, PaymentRepository, StorageRepository } from '@domain/repositories';
-import { ToggleFavoriteUseCase } from '@domain/usecases';
+import { CatRepository, PaymentRepository, SecureStorageRepository, FavoritesRepository } from '@domain/repositories';
+import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase } from '@domain/usecases';
 
 export interface DIContainer {
 
     // Repositories
     catRepository: CatRepository;
     paymentRepository: PaymentRepository;
-    storageRepository: StorageRepository;
+    secureStorageRepository: SecureStorageRepository;
+    favoritesRepository: FavoritesRepository;
 
     // Use Cases
     toggleFavoriteUseCase: ToggleFavoriteUseCase;
+    tokenizePaymentMethodUseCase: TokenizePaymentMethodUseCase;
+    getCatListUseCase: GetCatListUseCase;
+    getFavoritesUseCase: GetFavoritesUseCase;
+    getPremiumStatusUseCase: GetPremiumStatusUseCase;
 }

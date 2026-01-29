@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 export const useCatFeed = () => {
     // 1. Obtenemos el repositorio inyectado
-    const { catRepository } = useRepository();
+    const { getCatListUseCase } = useRepository();
 
     // 2. Usamos useInfiniteQuery
     const query = useInfiniteQuery({
@@ -15,7 +15,7 @@ export const useCatFeed = () => {
         // Función de carga
         queryFn: async ({ pageParam = 0 }) => {
             // Pedimos 10 gatos por página
-            return await catRepository.getCats(pageParam, 10);
+            return await getCatListUseCase.execute(pageParam, 10);
         },
 
         // Lógica para calcular la siguiente página

@@ -5,7 +5,7 @@ import { useRepository } from '@core/di/DiContext';
 
 export const useLinkCard = () => {
     const navigation = useNavigation();
-    const { paymentRepository, storageRepository } = useRepository();
+    const { tokenizePaymentMethodUseCase } = useRepository();
 
     const [cardNumber, setCardNumber] = useState('');
     const [cvv, setCvv] = useState('');
@@ -40,18 +40,15 @@ export const useLinkCard = () => {
         try {
             setIsLoading(true);
 
-            // A. Tokenizar (Llamada al Mock)
-            const token = await paymentRepository.tokenizeCard({
+            // A. Ejecutar el caso de uso (Tokenizar + Guardar)
+            await tokenizePaymentMethodUseCase.execute({
                 cardNumber: cleanNumber,
                 cvv,
                 cardHolder: name,
                 expirationDate: '12/30' // Simulado
             });
 
-            // B. Guardar Token Seguro (Keychain)
-            await storageRepository.saveToken(token);
-
-            // C. Feedback y Navegación
+            // B. Feedback y Navegación
             Alert.alert(
                 "¡Tarjeta Vinculada!",
                 "Ahora tienes acceso ilimitado a favoritos.",

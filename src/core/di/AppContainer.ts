@@ -1,25 +1,44 @@
-import { CatRepositoryImpl, PaymentRepositoryImpl, StorageRepositoryImpl } from '@data/repositories';
+import { CatRepositoryImpl, PaymentRepositoryImpl, SecureStorageRepositoryImpl, FavoritesRepositoryImpl } from '@data/repositories';
 import { AxiosClient } from '@core/api/AxiosClient';
 import { DIContainer } from '.';
-import { ToggleFavoriteUseCase } from '@domain/usecases';
+import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase } from '@domain/usecases';
 
-// 1. Infraestructura (Cliente HTTP)
+import { CatDataSourceImpl, FavoritesDataSourceImpl, SecureStorageDataSourceImpl } from '@data/datasources';
+import { AsyncStorageImpl } from '@core/local/AsyncStorageImpl';
+
+// 1. Infraestructura (Cliente HTTP & Local Storage)
 const httpClient = new AxiosClient();
+const localStorage = new AsyncStorageImpl();
 
-// 2. Repositorios (Data Layer)
-// Notarás que aquí 'inyectamos' el cliente HTTP. Esto es DI pura.
-const catRepository = new CatRepositoryImpl(httpClient);
+// 2. Data Sources
+const catRemoteDataSource = new CatDataSourceImpl(httpClient);
+const favoritesLocalDataSource = new FavoritesDataSourceImpl(localStorage);
+const secureStorageDataSource = new SecureStorageDataSourceImpl();
+
+// 3. Repositorios (Data Layer)
+const catRepository = new CatRepositoryImpl(catRemoteDataSource);
 const paymentRepository = new PaymentRepositoryImpl();
-const storageRepository = new StorageRepositoryImpl();
+const secureStorageRepository = new SecureStorageRepositoryImpl(secureStorageDataSource);
+const favoritesRepository = new FavoritesRepositoryImpl(favoritesLocalDataSource);
 
 // 3. Use Cases
-const toggleFavoriteUseCase = new ToggleFavoriteUseCase(storageRepository);
+const toggleFavoriteUseCase = new ToggleFavoriteUseCase(secureStorageRepository, favoritesRepository);
+const tokenizePaymentMethodUseCase = new TokenizePaymentMethodUseCase(paymentRepository, secureStorageRepository);
+const getCatListUseCase = new GetCatListUseCase(catRepository);
+
+const getFavoritesUseCase = new GetFavoritesUseCase(favoritesRepository);
+const getPremiumStatusUseCase = new GetPremiumStatusUseCase(secureStorageRepository);
 
 // 4. Exportamos el contenedor lleno
 export const appContainer: DIContainer = {
     catRepository,
     paymentRepository,
-    storageRepository,
+    secureStorageRepository,
+    favoritesRepository,
     // Use Cases
     toggleFavoriteUseCase,
+    tokenizePaymentMethodUseCase,
+    getCatListUseCase,
+    getFavoritesUseCase,
+    getPremiumStatusUseCase,
 };

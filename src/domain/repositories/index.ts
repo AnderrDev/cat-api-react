@@ -1,3 +1,4 @@
 export * from './PaymentRepository';
 export * from './CatRepository';
-export * from './StorageRepository';
+export * from './SecureStorageRepository';
+export * from './FavoritesRepository';

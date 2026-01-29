@@ -1,34 +1,19 @@
 import { CatRepository } from '@domain/repositories/CatRepository';
 import { Cat, NetworkError } from '@domain/entities';
-import { HttpClient } from '@core/api';
-
-interface CatDTO {
-    id: string;
-    url: string;
-    width: number;
-    height: number;
-}
+import { CatDataSource } from '@data/datasources';
 
 export class CatRepositoryImpl implements CatRepository {
-    constructor(private http: HttpClient) { }
+    constructor(private remoteDataSource: CatDataSource) { }
+
     async getCats(page: number, limit: number): Promise<Cat[]> {
         try {
-            const params = {
-                limit,
-                page,
-                order: 'RAND',
-                mime_types: 'jpg,png'
-            };
-
-            const data = await this.http.get<CatDTO[]>('/images/search', params);
-
-            return data.map(dto => ({
+            const dtos = await this.remoteDataSource.getCats(page, limit);
+            return dtos.map(dto => ({
                 id: dto.id,
                 url: dto.url,
                 width: dto.width,
                 height: dto.height,
             }));
-
         } catch (error) {
             console.error('Error fetching cats:', error);
             throw new NetworkError();

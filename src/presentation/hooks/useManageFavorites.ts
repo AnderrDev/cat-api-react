@@ -3,13 +3,13 @@ import { useRepository } from '@core/di/DiContext';
 import { Cat, LimitReachedError } from '@domain/entities';
 
 export const useManageFavorites = () => {
-    const { storageRepository, toggleFavoriteUseCase } = useRepository();
+    const { getFavoritesUseCase, toggleFavoriteUseCase } = useRepository();
     const queryClient = useQueryClient();
 
     // 1. Query para leer favoritos (Reemplaza al useEffect)
     const { data: favorites = [] } = useQuery({
         queryKey: ['favorites'],
-        queryFn: () => storageRepository.getFavorites(),
+        queryFn: async () => await getFavoritesUseCase.execute(),
     });
 
     // 2. Mutación para agregar/quitar (Maneja la lógica de éxito/error)
