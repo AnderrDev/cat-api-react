@@ -7,19 +7,24 @@ import {
 
 import { CatDataSourceImpl, FavoritesDataSourceImpl, SecureStorageDataSourceImpl } from '@data/datasources';
 import { AsyncStorageImpl } from '@core/local/AsyncStorageImpl';
+import { SecureStorageImpl } from '@core/local/SecureStorageImpl';
+
+import { PaymentMockService } from '@data/remote';
 
 // 1. Infraestructura (Cliente HTTP & Local Storage)
 const httpClient = new AxiosClient();
 const localStorage = new AsyncStorageImpl();
+const secureStorage = new SecureStorageImpl();
+const paymentService = new PaymentMockService();
 
 // 2. Data Sources
 const catRemoteDataSource = new CatDataSourceImpl(httpClient);
 const favoritesLocalDataSource = new FavoritesDataSourceImpl(localStorage);
-const secureStorageDataSource = new SecureStorageDataSourceImpl();
+const secureStorageDataSource = new SecureStorageDataSourceImpl(secureStorage);
 
 // 3. Repositorios (Data Layer)
 const catRepository = new CatRepositoryImpl(catRemoteDataSource);
-const paymentRepository = new PaymentRepositoryImpl();
+const paymentRepository = new PaymentRepositoryImpl(paymentService);
 const secureStorageRepository = new SecureStorageRepositoryImpl(secureStorageDataSource);
 const favoritesRepository = new FavoritesRepositoryImpl(favoritesLocalDataSource);
 

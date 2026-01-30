@@ -1,5 +1,5 @@
-import * as Keychain from 'react-native-keychain';
-import { SecurityToken, StoredPaymentDetails } from '@domain/entities';
+import { StoredPaymentDetails } from '@domain/entities';
+import { SecureStorage } from '@core/local/SecureStorage';
 
 export interface SecureStorageDataSource {
     savePaymentDetails(details: StoredPaymentDetails): Promise<void>;
@@ -8,25 +8,17 @@ export interface SecureStorageDataSource {
 }
 
 export class SecureStorageDataSourceImpl implements SecureStorageDataSource {
+    constructor(private secureStorage: SecureStorage) { }
 
     async savePaymentDetails(details: StoredPaymentDetails): Promise<void> {
-        await Keychain.setGenericPassword('auth_token', JSON.stringify(details));
+        await this.secureStorage.setSecureValue('auth_token', JSON.stringify(details));
     }
 
     async getPaymentDetails(): Promise<StoredPaymentDetails | null> {
         try {
-            const credentials = await Keychain.getGenericPassword();
+            const credentials = await this.secureStorage.getSecureValue('auth_token');
             if (credentials) {
-                // Check legacy (just token) vs new (object)
-                const parsed = JSON.parse(credentials.password);
-                if (parsed.token) {
-                    return parsed;
-                }
-                // Migration fallback: if it's just the old token structure (unlikely in this new flow but good practice)
-                return {
-                    token: parsed,
-                    cardInfo: { last4: '0000', cardHolder: 'Unknown', brand: 'Generic', expiration: '00/00' }
-                };
+                return JSON.parse(credentials) as StoredPaymentDetails;
             }
             return null;
         } catch (error) {
@@ -36,6 +28,6 @@ export class SecureStorageDataSourceImpl implements SecureStorageDataSource {
     }
 
     async clearToken(): Promise<void> {
-        await Keychain.resetGenericPassword();
+        await this.secureStorage.clearSecureValue('auth_token');
     }
 }

@@ -1,9 +1,11 @@
-import { PaymentMockService } from '@data/remote';
+import { PaymentService } from '@data/remote';
 import { CreditCard, SecurityToken, PaymentError } from '@domain/entities';
 import { PaymentRepository } from '@domain/repositories';
 import { logger } from '@core/utils';
 
 export class PaymentRepositoryImpl implements PaymentRepository {
+    constructor(private paymentService: PaymentService) { }
+
     async tokenizeCard(card: CreditCard): Promise<SecurityToken> {
         try {
             logger.info('Attempting to tokenize payment method', 'PaymentRepository', {
@@ -11,8 +13,8 @@ export class PaymentRepositoryImpl implements PaymentRepository {
                 last4: card.cardNumber.slice(-4)
             });
 
-            // Call Mock service, but in the future this would be a real call to Stripe/Bold/etc.
-            const token = await PaymentMockService.processPayment(card);
+            // Call injected service (Mock or Real)
+            const token = await this.paymentService.processPayment(card);
 
             logger.info('Payment method tokenized successfully', 'PaymentRepository');
             return token;

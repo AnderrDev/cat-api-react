@@ -1,19 +1,16 @@
 import { PaymentRepositoryImpl } from '../PaymentRepositoryImpl';
-import { PaymentMockService } from '@data/remote';
+import { PaymentService } from '@data/remote';
 import { CreditCard, PaymentError } from '@domain/entities';
-
-// Mock the PaymentMockService
-jest.mock('@data/remote', () => ({
-    PaymentMockService: {
-        processPayment: jest.fn()
-    }
-}));
 
 describe('PaymentRepositoryImpl', () => {
     let repository: PaymentRepositoryImpl;
+    let mockPaymentService: jest.Mocked<PaymentService>;
 
     beforeEach(() => {
-        repository = new PaymentRepositoryImpl();
+        mockPaymentService = {
+            processPayment: jest.fn()
+        };
+        repository = new PaymentRepositoryImpl(mockPaymentService);
         jest.clearAllMocks();
     });
 
@@ -31,12 +28,12 @@ describe('PaymentRepositoryImpl', () => {
                 createdAt: Date.now()
             };
 
-            (PaymentMockService.processPayment as jest.Mock).mockResolvedValue(mockToken);
+            mockPaymentService.processPayment.mockResolvedValue(mockToken);
 
             const result = await repository.tokenizeCard(card);
 
             expect(result).toEqual(mockToken);
-            expect(PaymentMockService.processPayment).toHaveBeenCalledWith(card);
+            expect(mockPaymentService.processPayment).toHaveBeenCalledWith(card);
         });
 
         it('should throw PaymentError when service fails', async () => {
@@ -48,7 +45,7 @@ describe('PaymentRepositoryImpl', () => {
             };
 
             const error = new Error('Card declined');
-            (PaymentMockService.processPayment as jest.Mock).mockRejectedValue(error);
+            mockPaymentService.processPayment.mockRejectedValue(error);
 
             await expect(repository.tokenizeCard(card)).rejects.toThrow(PaymentError);
             await expect(repository.tokenizeCard(card)).rejects.toThrow('Card declined');
@@ -62,7 +59,7 @@ describe('PaymentRepositoryImpl', () => {
                 cardHolder: 'John Doe'
             };
 
-            (PaymentMockService.processPayment as jest.Mock).mockRejectedValue('Unknown error');
+            mockPaymentService.processPayment.mockRejectedValue('Unknown error');
 
             await expect(repository.tokenizeCard(card)).rejects.toThrow(PaymentError);
         });

@@ -1,7 +1,8 @@
 import { CreditCard, SecurityToken } from '@domain/entities';
+import { PaymentService } from './PaymentService';
 
-export const PaymentMockService = {
-    processPayment: async (card: CreditCard): Promise<SecurityToken> => {
+export class PaymentMockService implements PaymentService {
+    async processPayment(card: CreditCard): Promise<SecurityToken> {
         return new Promise((resolve, reject) => {
             // 1. Simulate Network Latency (2 seconds)
             setTimeout(() => {
@@ -24,4 +25,4 @@ export const PaymentMockService = {
             }, 2000);
         });
     }
-};
+}
