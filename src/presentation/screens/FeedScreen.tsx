@@ -1,22 +1,25 @@
 import React, { useCallback } from 'react';
-import { View, FlatList, ActivityIndicator, StyleSheet, Alert, Text } from 'react-native';
+import { View, FlatList, ActivityIndicator, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCatFeed, useManageFavorites } from '@presentation/hooks';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useCatFeed, useManageFavorites, usePremiumStatus } from '@presentation/hooks';
 import { Cat, LimitReachedError } from '@domain/entities';
-import { CatCard } from '@presentation/components';
+import { CatCard, BreedFilter } from '@presentation/components';
 
 // Definimos los tipos de navegación aquí (o impórtalos de un archivo types.ts)
 type RootStackParamList = {
   Feed: undefined;
   LinkCard: undefined;
+  Favorites: undefined;
 };
 
 export const FeedScreen = () => {
   // 1. Hooks de Datos y Lógica
-  const { cats, loadMore, isLoading, isFetchingNextPage } = useCatFeed();
+  const { cats, breeds, selectedBreedId, setSelectedBreedId, loadMore, isLoading, isFetchingNextPage } = useCatFeed();
   const { isFavorite, toggleFavorite } = useManageFavorites();
+  const { isPremium } = usePremiumStatus();
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -67,7 +70,28 @@ export const FeedScreen = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.headerTitle}>CatWallet 🐱</Text>
+      <View style={styles.header}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.headerTitle}>CatWallet 🐱</Text>
+          {isPremium && (
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumText}>PRO</Text>
+            </View>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.favoritesButton}
+          onPress={() => navigation.navigate('Favorites')}
+        >
+          <Icon name="heart" size={28} color="#E74C3C" />
+        </TouchableOpacity>
+      </View>
+
+      <BreedFilter
+        breeds={breeds}
+        selectedBreedId={selectedBreedId}
+        onSelectBreed={setSelectedBreedId}
+      />
 
       {isLoading && cats.length === 0 ? (
         <ActivityIndicator size="large" style={styles.centerLoader} />
@@ -95,12 +119,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     color: '#333',
+  },
+  premiumBadge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  premiumText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  favoritesButton: {
+    padding: 8,
   },
   centerLoader: {
     flex: 1,
@@ -111,4 +165,4 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     alignItems: 'center',
   },
-});   
+});

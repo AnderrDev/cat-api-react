@@ -15,6 +15,7 @@ export class FavoritesDataSourceImpl implements FavoritesDataSource {
     async getFavorites(): Promise<Cat[]> {
         try {
             const jsonValue = await this.localStorage.getItem(FAVORITES_KEY);
+            console.log(jsonValue);
             return jsonValue != null ? JSON.parse(jsonValue) : [];
         } catch (e) {
             console.error('Error loading favorites from local source', e);

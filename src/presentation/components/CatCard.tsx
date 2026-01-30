@@ -27,7 +27,12 @@ export const CatCard = memo(({ cat, isFavorite, onToggleFavorite }: Props) => {
             />
 
             <View style={styles.footer}>
-                <Text style={styles.catId}>Cat #{cat.id}</Text>
+                <View>
+                    <Text style={styles.catId}>Cat #{cat.id}</Text>
+                    {cat.breeds && cat.breeds.length > 0 && (
+                        <Text style={styles.breedText}>{cat.breeds[0].name}</Text>
+                    )}
+                </View>
 
                 <TouchableOpacity
                     style={styles.heartButton}
@@ -78,6 +83,11 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#333',
+    },
+    breedText: {
+        fontSize: 12,
+        color: '#666',
+        marginTop: 2,
     },
     heartButton: {
         padding: 5,

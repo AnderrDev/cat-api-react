@@ -1,3 +1,4 @@
+export * from './AppErrors';
 export * from './Cat';
 export * from './Payment';
-export * from './AppErrors';
+export * from './Breed';

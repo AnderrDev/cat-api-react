@@ -1,1 +1,2 @@
-export { CatCard } from './CatCard';
+export * from './CatCard';
+export * from './BreedFilter';

@@ -1,7 +1,7 @@
 import { CatRepositoryImpl, PaymentRepositoryImpl, SecureStorageRepositoryImpl, FavoritesRepositoryImpl } from '@data/repositories';
 import { AxiosClient } from '@core/api/AxiosClient';
 import { DIContainer } from '.';
-import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase } from '@domain/usecases';
+import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase, GetBreedsUseCase } from '@domain/usecases';
 
 import { CatDataSourceImpl, FavoritesDataSourceImpl, SecureStorageDataSourceImpl } from '@data/datasources';
 import { AsyncStorageImpl } from '@core/local/AsyncStorageImpl';
@@ -28,6 +28,7 @@ const getCatListUseCase = new GetCatListUseCase(catRepository);
 
 const getFavoritesUseCase = new GetFavoritesUseCase(favoritesRepository);
 const getPremiumStatusUseCase = new GetPremiumStatusUseCase(secureStorageRepository);
+const getBreedsUseCase = new GetBreedsUseCase(catRepository);
 
 // 4. Exportamos el contenedor lleno
 export const appContainer: DIContainer = {
@@ -41,4 +42,5 @@ export const appContainer: DIContainer = {
     getCatListUseCase,
     getFavoritesUseCase,
     getPremiumStatusUseCase,
+    getBreedsUseCase,
 };
