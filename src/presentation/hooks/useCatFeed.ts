@@ -15,6 +15,7 @@ export const useCatFeed = () => {
     const [isFetchingNextPage, setIsFetchingNextPage] = useState(false); // Loading more items
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+    const [refetchTrigger, setRefetchTrigger] = useState(0);
 
     // 2. Load Breeds (Only on mount)
     useEffect(() => {
@@ -65,7 +66,7 @@ export const useCatFeed = () => {
         };
 
         loadCats();
-    }, [page, selectedBreedId]);
+    }, [page, selectedBreedId, refetchTrigger]);
 
     // 4. Handler for filter change
     const handleSelectBreed = (breedId: string | undefined) => {
@@ -82,6 +83,12 @@ export const useCatFeed = () => {
         }
     };
 
+    // 6. Refetch handler
+    const refetch = () => {
+        setPage(0);
+        setRefetchTrigger(prev => prev + 1);
+    };
+
     return {
         cats,
         breeds,
@@ -90,6 +97,6 @@ export const useCatFeed = () => {
         isLoading,
         isFetchingNextPage,
         loadMore,
-        refetch: () => setPage(0)
+        refetch
     };
 };

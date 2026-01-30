@@ -1,4 +1,3 @@
-// Definimos un contrato genérico para peticiones HTTP
 export interface HttpParams {
     [key: string]: string | number | boolean;
 }

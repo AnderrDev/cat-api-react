@@ -25,7 +25,7 @@ export class SecureStorageDataSourceImpl implements SecureStorageDataSource {
                 // Migration fallback: if it's just the old token structure (unlikely in this new flow but good practice)
                 return {
                     token: parsed,
-                    cardInfo: { last4: '0000', cardHolder: 'Unknown', brand: 'Generic' }
+                    cardInfo: { last4: '0000', cardHolder: 'Unknown', brand: 'Generic', expiration: '00/00' }
                 };
             }
             return null;

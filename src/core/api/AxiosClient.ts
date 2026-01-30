@@ -14,7 +14,6 @@ export class AxiosClient implements HttpClient {
             },
         });
 
-        // Interceptor para API Key (igual que antes, pero encapsulado aquí)
         this.axiosInstance.interceptors.request.use((config) => {
             if (config.headers) {
                 config.headers['x-api-key'] = API_KEY;

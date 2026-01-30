@@ -34,7 +34,6 @@ const getFavoritesUseCase = new GetFavoritesUseCase(favoritesRepository);
 const getPremiumStatusUseCase = new GetPremiumStatusUseCase(secureStorageRepository);
 const getBreedsUseCase = new GetBreedsUseCase(catRepository);
 
-// 4. Exportamos el contenedor lleno
 export const appContainer: DIContainer = {
     catRepository,
     paymentRepository,

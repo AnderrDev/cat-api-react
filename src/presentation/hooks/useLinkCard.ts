@@ -61,6 +61,7 @@ export const useLinkCard = () => {
         isSubmitting,
         formatCardNumber,
         formatExpiration,
+        onSubmit,
         submit: handleSubmit(onSubmit),
         rules: cardFormRules
     };
