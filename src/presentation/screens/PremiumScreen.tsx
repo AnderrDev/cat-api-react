@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ArrowBackIcon } from '@presentation/components/icons';
 import { usePremiumDetails } from '@presentation/hooks';
 import { CreditCardDisplay } from '@presentation/components';
 
@@ -39,7 +39,7 @@ export const PremiumScreen = () => {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-back" size={24} color="#333" />
+                    <ArrowBackIcon size={24} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Billetera Segura</Text>
                 <View style={{ width: 24 }} />

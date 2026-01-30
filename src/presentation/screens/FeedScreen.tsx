@@ -3,7 +3,7 @@ import { View, FlatList, ActivityIndicator, StyleSheet, Alert, Text, TouchableOp
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { HeartIcon } from '@presentation/components/icons';
 import { useCatFeed, useManageFavorites, usePremiumStatus } from '@presentation/hooks';
 import { Cat, LimitReachedError } from '@domain/entities';
 import { CatCard, BreedFilter } from '@presentation/components';
@@ -79,7 +79,7 @@ export const FeedScreen = () => {
           style={styles.favoritesButton}
           onPress={() => navigation.navigate('Favorites')}
         >
-          <Icon name="heart" size={28} color="#E74C3C" />
+          <HeartIcon size={28} color="#E74C3C" filled={true} />
         </TouchableOpacity>
       </View>
 

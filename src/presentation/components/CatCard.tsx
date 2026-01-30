@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
 import { FadeInImage } from './FadeInImage';
-import Icon from 'react-native-vector-icons/Ionicons';
+
 import { Cat } from '@domain/entities';
+import { HeartIcon, LockIcon } from '@presentation/components/icons';
 
 interface Props {
     cat: Cat;
@@ -31,7 +32,7 @@ export const CatCard = memo(({ cat, isFavorite, onToggleFavorite, isLocked, onPr
                     activeOpacity={0.9}
                     onPress={onPressLock}
                 >
-                    <Icon name="lock-closed" size={40} color="#FFF" />
+                    <LockIcon size={40} color="#FFF" filled={true} />
                     <Text style={styles.lockedText}>Premium Feature</Text>
                     <Text style={styles.lockedSubText}>Tap to Unlock</Text>
                 </TouchableOpacity>
@@ -51,12 +52,15 @@ export const CatCard = memo(({ cat, isFavorite, onToggleFavorite, isLocked, onPr
                     activeOpacity={0.7}
                     disabled={isLocked}
                 >
-                    {/* If you haven't configured vector-icons, replace Icon with <Text>❤️</Text> */}
-                    <Icon
-                        name={isLocked ? 'lock-closed-outline' : (isFavorite ? 'heart' : 'heart-outline')}
-                        size={28}
-                        color={isLocked ? '#999' : (isFavorite ? '#E74C3C' : '#000')}
-                    />
+                    {isLocked ? (
+                        <LockIcon size={28} color="#999" />
+                    ) : (
+                        <HeartIcon
+                            size={28}
+                            color={isFavorite ? '#E74C3C' : '#000'}
+                            filled={isFavorite}
+                        />
+                    )}
                 </TouchableOpacity>
             </View>
         </View>
