@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Animated, StyleProp, ViewStyle, StyleSheet, View } from 'react-native';
-import FastImage, { ImageStyle } from 'react-native-fast-image';
+import { Animated, StyleProp, ViewStyle, StyleSheet, View, Image, ImageStyle } from 'react-native';
 
 interface FadeInImageProps {
     uri: string;
@@ -22,14 +21,10 @@ export const FadeInImage = ({ uri, style, containerStyle }: FadeInImageProps) =>
     return (
         <View style={[styles.container, containerStyle]}>
             <Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>
-                <FastImage
+                <Image
                     style={[style, styles.image]}
-                    source={{
-                        uri,
-                        priority: FastImage.priority.normal,
-                        cache: FastImage.cacheControl.immutable, // Aggressive caching
-                    }}
-                    resizeMode={FastImage.resizeMode.cover}
+                    source={{ uri }}
+                    resizeMode="cover"
                     onLoadEnd={onLoadEnd}
                 />
             </Animated.View>

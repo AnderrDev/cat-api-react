@@ -2,7 +2,7 @@
 
 // Mock React Native modules
 jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
-jest.mock('react-native-fast-image', () => 'FastImage');
+
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>
