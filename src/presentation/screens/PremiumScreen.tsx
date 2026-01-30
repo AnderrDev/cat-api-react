@@ -66,7 +66,7 @@ export const PremiumScreen = () => {
                         </View>
                         <View>
                             <Text style={styles.cardLabel}>VENCE</Text>
-                            <Text style={styles.cardExpires}>12/30</Text>
+                            <Text style={styles.cardExpires}>{cardInfo.expiration}</Text>
                         </View>
                     </View>
                 </View>

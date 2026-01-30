@@ -16,6 +16,7 @@ export class TokenizePaymentMethodUseCase {
             last4: card.cardNumber.slice(-4),
             cardHolder: card.cardHolder,
             brand: 'Visa (Simulado)', // En un SDK real esto viene del emisor
+            expiration: card.expirationDate,
         };
 
         await this.secureStorageRepository.savePaymentDetails({

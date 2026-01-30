@@ -14,6 +14,7 @@ export interface CardInfo {
     last4: string;
     cardHolder: string;
     brand: string; // Visa, Mastercard, etc. (Simulated)
+    expiration: string; // MM/YY
 }
 
 export interface StoredPaymentDetails {

@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     },
     lockedOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.6)',
+        backgroundColor: 'rgba(0, 0, 0, 0.92)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 10,

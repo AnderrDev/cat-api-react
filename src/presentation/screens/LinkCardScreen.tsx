@@ -3,12 +3,12 @@ import {
     View, Text, TextInput, StyleSheet, TouchableOpacity,
     ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
+import { Controller } from 'react-hook-form';
 import { useLinkCard } from '@presentation/hooks';
 
 export const LinkCardScreen = () => {
     const {
-        cardNumber, cvv, name, isLoading,
-        handleCardNumberChange, setCvv, setName, submit
+        control, errors, isValid, isSubmitting, formatCardNumber, formatExpiration, submit, rules
     } = useLinkCard();
 
     return (
@@ -22,66 +22,92 @@ export const LinkCardScreen = () => {
                     Desbloquea favoritos ilimitados vinculando tu tarjeta de crédito de prueba.
                 </Text>
 
-                {/* Visualización de Tarjeta (Opcional, pero se ve pro) */}
-                <View style={styles.cardPreview}>
-                    <Text style={styles.cardLabel}>CARD NUMBER</Text>
-                    <Text style={styles.cardValue}>
-                        {cardNumber || '•••• •••• •••• ••••'}
-                    </Text>
-                </View>
-
                 {/* Formulario */}
                 <View style={styles.form}>
                     <Text style={styles.label}>Nombre en la tarjeta</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="JUAN PEREZ"
-                        value={name}
-                        onChangeText={setName}
-                        autoCapitalize="characters"
+                    <Controller
+                        control={control}
+                        name="name"
+                        rules={rules.name}
+                        render={({ field: { onChange, value } }) => (
+                            <TextInput
+                                style={[styles.input, errors.name && styles.inputError]}
+                                placeholder="JUAN PEREZ"
+                                value={value}
+                                onChangeText={(text) => onChange(text.toUpperCase())}
+                                autoCapitalize="characters"
+                            />
+                        )}
                     />
+                    {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
 
                     <Text style={styles.label}>Número de tarjeta</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="0000 0000 0000 0000"
-                        keyboardType="numeric"
-                        value={cardNumber}
-                        onChangeText={handleCardNumberChange}
-                        maxLength={19} // 16 dígitos + 3 espacios
+                    <Controller
+                        control={control}
+                        name="cardNumber"
+                        rules={rules.cardNumber}
+                        render={({ field: { onChange, value } }) => (
+                            <TextInput
+                                style={[styles.input, errors.cardNumber && styles.inputError]}
+                                placeholder="0000 0000 0000 0000"
+                                keyboardType="numeric"
+                                value={value}
+                                onChangeText={(text) => onChange(formatCardNumber(text))}
+                                maxLength={19}
+                            />
+                        )}
                     />
+                    {errors.cardNumber && <Text style={styles.errorText}>{errors.cardNumber.message}</Text>}
 
                     <View style={styles.row}>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.label}>CVV</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="123"
-                                keyboardType="numeric"
-                                maxLength={4}
-                                value={cvv}
-                                onChangeText={setCvv}
-                                secureTextEntry
+                            <Controller
+                                control={control}
+                                name="cvv"
+                                rules={rules.cvv}
+                                render={({ field: { onChange, value } }) => (
+                                    <TextInput
+                                        style={[styles.input, errors.cvv && styles.inputError]}
+                                        placeholder="123"
+                                        keyboardType="numeric"
+                                        maxLength={3}
+                                        value={value}
+                                        onChangeText={(text) => onChange(text.replace(/\D/g, ''))}
+                                        secureTextEntry
+                                    />
+                                )}
                             />
+                            {errors.cvv && <Text style={styles.errorText}>{errors.cvv.message}</Text>}
                         </View>
                         <View style={{ width: 16 }} />
                         <View style={{ flex: 1 }}>
                             <Text style={styles.label}>Expiración</Text>
-                            <TextInput
-                                style={[styles.input, { backgroundColor: '#e0e0e0' }]}
-                                placeholder="MM/YY"
-                                value="12/30"
-                                editable={false} // Hardcodeado para la prueba
+                            <Controller
+                                control={control}
+                                name="expiration"
+                                rules={rules.expiration}
+                                render={({ field: { onChange, value } }) => (
+                                    <TextInput
+                                        style={[styles.input, errors.expiration && styles.inputError]}
+                                        placeholder="MM/YY"
+                                        value={value}
+                                        onChangeText={(text) => onChange(formatExpiration(text))}
+                                        keyboardType="numeric"
+                                        maxLength={5}
+                                    />
+                                )}
                             />
+                            {errors.expiration && <Text style={styles.errorText}>{errors.expiration.message}</Text>}
                         </View>
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.button, isLoading && styles.buttonDisabled]}
+                        style={[styles.button, (isSubmitting || !isValid) && styles.buttonDisabled]}
                         onPress={submit}
-                        disabled={isLoading}
+                        disabled={isSubmitting || !isValid}
                     >
-                        {isLoading ? (
+                        {isSubmitting ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
                             <Text style={styles.buttonText}>VINCULAR TARJETA</Text>
@@ -151,6 +177,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E5E8E8',
         fontSize: 16,
+    },
+    inputError: {
+        borderColor: '#E74C3C',
+        borderWidth: 2,
+        marginBottom: 4,
+    },
+    errorText: {
+        color: '#E74C3C',
+        fontSize: 12,
+        marginBottom: 12,
     },
     row: {
         flexDirection: 'row',
