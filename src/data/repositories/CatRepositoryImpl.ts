@@ -1,6 +1,7 @@
 import { CatRepository } from '@domain/repositories/CatRepository';
 import { Cat, NetworkError, Breed } from '@domain/entities';
 import { CatDataSource } from '@data/datasources';
+import { logger } from '@core/utils';
 
 export class CatRepositoryImpl implements CatRepository {
     constructor(private remoteDataSource: CatDataSource) { }
@@ -16,8 +17,13 @@ export class CatRepositoryImpl implements CatRepository {
                 breeds: dto.breeds
             }));
         } catch (error) {
-            console.error('Error fetching cats:', error);
-            throw new NetworkError();
+            // Error already logged in DataSource, just propagate
+            if (error instanceof NetworkError) {
+                throw error;
+            }
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            logger.error('Error in CatRepository.getCats', err, 'CatRepository', { page, limit, breedId });
+            throw new NetworkError('Failed to fetch cats from repository', { page, limit, breedId });
         }
     }
 
@@ -33,8 +39,13 @@ export class CatRepositoryImpl implements CatRepository {
                 life_span: dto.life_span
             }));
         } catch (error) {
-            console.error('Error fetching breeds:', error);
-            throw new NetworkError();
+            // Error already logged in DataSource, just propagate
+            if (error instanceof NetworkError) {
+                throw error;
+            }
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            logger.error('Error in CatRepository.getBreeds', err, 'CatRepository');
+            throw new NetworkError('Failed to fetch breeds from repository');
         }
     }
 }

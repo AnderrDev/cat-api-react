@@ -15,7 +15,7 @@ interface Props {
 const { width } = Dimensions.get('window');
 const CARD_HEIGHT = 300;
 
-// Usamos 'memo' para evitar re-renderizados innecesarios en listas largas
+// Use 'memo' to avoid unnecessary re-renders in long lists
 export const CatCard = memo(({ cat, isFavorite, onToggleFavorite, isLocked, onPressLock }: Props) => {
     return (
         <View style={styles.container}>
@@ -51,7 +51,7 @@ export const CatCard = memo(({ cat, isFavorite, onToggleFavorite, isLocked, onPr
                     activeOpacity={0.7}
                     disabled={isLocked}
                 >
-                    {/* Si no has configurado vector-icons, cambia Icon por un <Text>❤️</Text> */}
+                    {/* If you haven't configured vector-icons, replace Icon with <Text>❤️</Text> */}
                     <Icon
                         name={isLocked ? 'lock-closed-outline' : (isFavorite ? 'heart' : 'heart-outline')}
                         size={28}
@@ -66,12 +66,12 @@ export const CatCard = memo(({ cat, isFavorite, onToggleFavorite, isLocked, onPr
 const styles = StyleSheet.create({
     container: {
         height: CARD_HEIGHT,
-        width: width * 0.9, // 90% del ancho
+        width: width * 0.9, // 90% of screen width
         alignSelf: 'center',
         marginVertical: 10,
         backgroundColor: 'white',
         borderRadius: 16,
-        // Sombras sutiles (Elevation para Android, Shadow para iOS)
+        // Subtle shadows (Elevation for Android, Shadow for iOS)
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     image: {
         width: '100%',
         height: '85%',
-        backgroundColor: '#f0f0f0', // Placeholder visual
+        backgroundColor: '#f0f0f0', // Visual placeholder
     },
     footer: {
         height: '15%',

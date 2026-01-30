@@ -10,7 +10,7 @@ import { CatCard, BreedFilter } from '@presentation/components';
 import { RootStackParamList } from '@presentation/navigation/types';
 
 export const FeedScreen = () => {
-  // 1. Hooks de Datos y Lógica
+  // 1. Data and Logic Hooks
   const { cats, breeds, selectedBreedId, setSelectedBreedId, loadMore, isLoading, isFetchingNextPage } = useCatFeed();
   const { isFavorite, toggleFavorite } = useManageFavorites();
   const { isPremium } = usePremiumStatus();
@@ -18,12 +18,12 @@ export const FeedScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
 
-  // 2. Manejador de Likes (El Core de la Prueba)
+  // 2. Favorite Toggle Handler (Core of the Test)
   const handleToggleFavorite = useCallback(async (cat: Cat) => {
     try {
       await toggleFavorite(cat);
     } catch (error) {
-      // AQUÍ OCURRE LA MAGIA DEL REQUISITO
+      // HERE'S THE REQUIREMENT MAGIC
       if (error instanceof LimitReachedError) {
         Alert.alert(
           "Límite Gratuito Alcanzado",
@@ -43,7 +43,7 @@ export const FeedScreen = () => {
     }
   }, [toggleFavorite, navigation]);
 
-  // 3. Renderizado de cada item (Optimizado)
+  // 3. Render each item (Optimized)
   const renderItem = useCallback(({ item }: { item: Cat }) => (
     <CatCard
       cat={item}
@@ -52,7 +52,7 @@ export const FeedScreen = () => {
     />
   ), [isFavorite, handleToggleFavorite]);
 
-  // 4. Renderizado del Footer (Loading al hacer scroll)
+  // 4. Footer Rendering (Loading while scrolling)
   const renderFooter = () => {
     if (!isFetchingNextPage) return <View style={{ height: 20 }} />;
     return (
@@ -97,9 +97,9 @@ export const FeedScreen = () => {
           data={cats}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          // Optimizaciones de Rendimiento
+          // Performance Optimizations
           onEndReached={() => loadMore()}
-          onEndReachedThreshold={0.5} // Cargar más cuando falte la mitad de la pantalla
+          onEndReachedThreshold={0.5} // Load more when halfway through screen
           initialNumToRender={5}
           maxToRenderPerBatch={5}
           windowSize={5}

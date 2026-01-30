@@ -12,7 +12,7 @@ export const AppNavigator = () => {
             <Stack.Navigator
                 initialRouteName="Feed"
                 screenOptions={{
-                    headerShown: false, // Ocultamos header por defecto
+                    headerShown: false, // Hide header by default
                 }}
             >
                 <Stack.Screen name="Feed" component={FeedScreen} />
@@ -20,8 +20,8 @@ export const AppNavigator = () => {
                     name="LinkCard"
                     component={LinkCardScreen}
                     options={{
-                        headerShown: true, // Mostramos header para que tenga botón "Atrás"
-                        title: '', // Título vacío
+                        headerShown: true, // Show header so it has "Back" button
+                        title: '', // Empty title
                         headerTransparent: true,
                     }}
                 />

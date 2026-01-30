@@ -52,7 +52,7 @@ export const FavoritesScreen = () => {
     }, [navigation]);
 
     const renderItem = useCallback(({ item, index }: { item: Cat; index: number }) => {
-        // Lógica de Bloqueo: Si no es Premium y el índice es >= 3 (0, 1, 2 son gratis)
+        // Lock Logic: If not Premium and index is >= 3 (0, 1, 2 are free)
         const isLocked = !isPremium && index >= 3;
 
         return (
@@ -70,7 +70,7 @@ export const FavoritesScreen = () => {
         <View style={styles.container}>
             {favorites.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>No tienes favoritos aún 😿</Text>
+                    <Text style={styles.emptyText}>No favorites yet</Text>
                 </View>
             ) : (
                 <FlatList

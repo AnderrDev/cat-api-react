@@ -5,18 +5,18 @@ import { useCallback, useEffect, useState } from 'react';
 export const useCatFeed = () => {
     const { getCatListUseCase, getBreedsUseCase } = useRepository();
 
-    // 1. Estado Local
+    // 1. Local State
     const [cats, setCats] = useState<Cat[]>([]);
     const [breeds, setBreeds] = useState<Breed[]>([]);
     const [selectedBreedId, setSelectedBreedId] = useState<string | undefined>(undefined);
 
-    // Estado de carga y paginación
-    const [isLoading, setIsLoading] = useState(true); // Carga inicial
-    const [isFetchingNextPage, setIsFetchingNextPage] = useState(false); // Carga de más items
+    // Loading and pagination state
+    const [isLoading, setIsLoading] = useState(true); // Initial loading
+    const [isFetchingNextPage, setIsFetchingNextPage] = useState(false); // Loading more items
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
-    // 2. Cargar Razas (Solo al montar)
+    // 2. Load Breeds (Only on mount)
     useEffect(() => {
         const loadBreeds = async () => {
             try {
@@ -29,10 +29,10 @@ export const useCatFeed = () => {
         loadBreeds();
     }, []);
 
-    // 3. Cargar Gatos (Efecto principal)
+    // 3. Load Cats (Main effect)
     useEffect(() => {
         const loadCats = async () => {
-            // Si es la página 0, es una carga completa o cambio de filtro
+            // If page 0, it's a full load or filter change
             if (page === 0) {
                 setIsLoading(true);
             } else {
@@ -46,10 +46,10 @@ export const useCatFeed = () => {
                     setHasMore(false);
                 } else {
                     setCats(prev => {
-                        // Si es página 0, reemplazamos todo
+                        // If page 0, replace everything
                         if (page === 0) return newCats;
 
-                        // Si no, agregamos y filtramos duplicados
+                        // Otherwise, add and filter duplicates
                         const combined = [...prev, ...newCats];
                         const uniqueMap = new Map();
                         combined.forEach(cat => uniqueMap.set(cat.id, cat));
@@ -67,15 +67,15 @@ export const useCatFeed = () => {
         loadCats();
     }, [page, selectedBreedId]);
 
-    // 4. Manejador para cambio de filtro
+    // 4. Handler for filter change
     const handleSelectBreed = (breedId: string | undefined) => {
         setSelectedBreedId(breedId);
-        setPage(0);      // Reseteamos paginación
-        setHasMore(true); // Reseteamos bandera de fin
-        setCats([]);     // Limpiamos lista actual (opcional, para visual feedback)
+        setPage(0);      // Reset pagination
+        setHasMore(true); // Reset end flag
+        setCats([]);     // Clear current list (optional, for visual feedback)
     };
 
-    // 5. Manejador para cargar más
+    // 5. Handler to load more
     const loadMore = () => {
         if (!isLoading && !isFetchingNextPage && hasMore) {
             setPage(prev => prev + 1);
@@ -86,7 +86,7 @@ export const useCatFeed = () => {
         cats,
         breeds,
         selectedBreedId,
-        setSelectedBreedId: handleSelectBreed, // Usamos nuestro wrapper para resetear estado
+        setSelectedBreedId: handleSelectBreed, // Use our wrapper to reset state
         isLoading,
         isFetchingNextPage,
         loadMore,

@@ -1,5 +1,6 @@
 import { HttpClient } from '@core/api';
 import { NetworkError, Breed } from '@domain/entities';
+import { logger } from '@core/utils';
 
 export interface CatDTO {
     id: string;
@@ -42,8 +43,9 @@ export class CatDataSourceImpl implements CatDataSource {
             const data = await this.http.get<CatDTO[]>('/images/search', params);
             return data;
         } catch (error) {
-            console.error('Error in RemoteDataSource (getCats):', error);
-            throw new NetworkError();
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            logger.error('Error fetching cats from API', err, 'CatDataSource', { page, limit, breedId });
+            throw new NetworkError('Failed to fetch cats', { endpoint: '/images/search', params: { page, limit, breedId } });
         }
     }
 
@@ -52,8 +54,9 @@ export class CatDataSourceImpl implements CatDataSource {
             const data = await this.http.get<BreedDTO[]>('/breeds');
             return data;
         } catch (error) {
-            console.error('Error in RemoteDataSource (getBreeds):', error);
-            throw new NetworkError();
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            logger.error('Error fetching breeds from API', err, 'CatDataSource');
+            throw new NetworkError('Failed to fetch breeds', { endpoint: '/breeds' });
         }
     }
 }

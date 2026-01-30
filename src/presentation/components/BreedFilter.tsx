@@ -10,7 +10,7 @@ interface Props {
 
 export const BreedFilter = ({ breeds, selectedBreedId, onSelectBreed }: Props) => {
 
-    // Agregamos opción "All" al principio
+    // Add "All" option at the beginning
     const data = [{ id: 'all', name: 'All' }, ...breeds];
 
     return (
