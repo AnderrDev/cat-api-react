@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { usePremiumDetails } from '@presentation/hooks';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { usePremiumDetails } from '@presentation/hooks';
+import { CreditCardDisplay } from '@presentation/components';
 
 const { width } = Dimensions.get('window');
 
@@ -18,7 +19,7 @@ export const PremiumScreen = () => {
     if (isLoading) {
         return (
             <View style={styles.center}>
-                <Text>Cargando información segura...</Text>
+                <ActivityIndicator size="large" color="#27AE60" />
             </View>
         );
     }
@@ -26,59 +27,44 @@ export const PremiumScreen = () => {
     if (!details) {
         return (
             <View style={styles.center}>
-                <Text>No se encontró información de la tarjeta.</Text>
+                <Text style={styles.emptyText}>No hay datos de pago disponibles</Text>
             </View>
         );
     }
 
-    const { cardInfo, token } = details;
+    const { cardInfo } = details;
 
     return (
         <View style={styles.container}>
+            {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-back" size={28} color="#000" />
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Icon name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Billetera Segura</Text>
-                <View style={{ width: 28 }} />
+                <View style={{ width: 24 }} />
             </View>
 
+            {/* Tarjeta Virtual */}
             <View style={styles.cardContainer}>
-                {/* Simulated Credit Card View */}
-                <View style={styles.card}>
-                    <View style={styles.cardTop}>
-                        <Text style={styles.cardBrand}>{cardInfo.brand}</Text>
-                        <Icon name="wifi" size={24} color="rgba(255,255,255,0.7)" />
-                    </View>
-
-                    <View style={styles.chipContainer}>
-                        <View style={styles.chip} />
-                    </View>
-
-                    <Text style={styles.cardNumber}>
-                        •••• •••• •••• {cardInfo.last4}
-                    </Text>
-
-                    <View style={styles.cardBottom}>
-                        <View>
-                            <Text style={styles.cardLabel}>TITULAR</Text>
-                            <Text style={styles.cardHolder}>{cardInfo.cardHolder.toUpperCase()}</Text>
-                        </View>
-                        <View>
-                            <Text style={styles.cardLabel}>VENCE</Text>
-                            <Text style={styles.cardExpires}>{cardInfo.expiration}</Text>
-                        </View>
-                    </View>
-                </View>
+                <CreditCardDisplay
+                    cardNumber={`•••• •••• •••• ${cardInfo.last4}`}
+                    cardHolder={cardInfo.cardHolder}
+                    expiration={cardInfo.expiration}
+                    variant="filled"
+                />
             </View>
 
-            <View style={styles.securityInfo}>
-                <Text style={styles.securityTitle}>Token de Seguridad (Activo)</Text>
-                <View style={styles.tokenContainer}>
-                    <Icon name="lock-closed" size={20} color="#27AE60" />
-                    <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="middle">
-                        {token.accessToken}
-                    </Text>
+            {/* Info Section */}
+            <View style={styles.infoSection}>
+                <Text style={styles.infoTitle}>Detalles del Método de Pago</Text>
+                <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Tipo:</Text>
+                    <Text style={styles.infoValue}>{cardInfo.brand}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Últimos 4 dígitos:</Text>
+                    <Text style={styles.infoValue}>{cardInfo.last4}</Text>
                 </View>
                 <Text style={styles.securityNote}>
                     Tu tarjeta está tokenizada. TheCatAPI no tiene acceso a tus datos reales.
@@ -105,6 +91,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    emptyText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -113,14 +104,16 @@ const styles = StyleSheet.create({
         paddingTop: 60, // Adjust for Safe Area
         paddingBottom: 20,
     },
+    backButton: {
+        padding: 8,
+    },
     headerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
     },
     cardContainer: {
-        alignItems: 'center',
-        marginVertical: 30,
+        margin: 20,
     },
     card: {
         width: width * 0.9,
@@ -161,50 +154,31 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
         fontWeight: '600',
         fontFamily: 'Courier', // Monospace font simulation
+        paddingHorizontal: 20,
+        marginBottom: 30,
     },
-    cardBottom: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    infoSection: {
+        paddingHorizontal: 20,
     },
-    cardLabel: {
-        color: '#95A5A6',
-        fontSize: 10,
-        marginBottom: 2,
-    },
-    cardHolder: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    cardExpires: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    securityInfo: {
-        padding: 20,
-    },
-    securityTitle: {
+    infoTitle: {
         fontSize: 16,
         fontWeight: 'bold',
         color: '#333',
+        marginBottom: 15,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         marginBottom: 10,
     },
-    tokenContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-    },
-    tokenText: {
-        marginLeft: 10,
-        color: '#666',
+    infoLabel: {
         fontSize: 14,
-        flex: 1,
-        fontFamily: 'Courier',
+        color: '#666',
+    },
+    infoValue: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
     },
     securityNote: {
         marginTop: 10,
