@@ -1,5 +1,5 @@
 import { CatRepository, PaymentRepository, SecureStorageRepository, FavoritesRepository } from '@domain/repositories';
-import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase, GetBreedsUseCase, GetPremiumDetailsUseCase } from '@domain/usecases';
+import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase, GetBreedsUseCase, GetPremiumDetailsUseCase, RemovePremiumUseCase } from '@domain/usecases';
 
 export interface DIContainer {
 
@@ -17,4 +17,5 @@ export interface DIContainer {
     getPremiumStatusUseCase: GetPremiumStatusUseCase;
     getBreedsUseCase: GetBreedsUseCase;
     getPremiumDetailsUseCase: GetPremiumDetailsUseCase;
+    removePremiumUseCase: RemovePremiumUseCase;
 }

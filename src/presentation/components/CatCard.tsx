@@ -8,19 +8,34 @@ interface Props {
     cat: Cat;
     isFavorite: boolean;
     onToggleFavorite: (cat: Cat) => void;
+    isLocked?: boolean;
+    onPressLock?: () => void;
 }
 
 const { width } = Dimensions.get('window');
 const CARD_HEIGHT = 300;
 
 // Usamos 'memo' para evitar re-renderizados innecesarios en listas largas
-export const CatCard = memo(({ cat, isFavorite, onToggleFavorite }: Props) => {
+export const CatCard = memo(({ cat, isFavorite, onToggleFavorite, isLocked, onPressLock }: Props) => {
     return (
         <View style={styles.container}>
             <FadeInImage
                 containerStyle={styles.image}
                 uri={cat.url}
             />
+
+            {/* Locked Overlay */}
+            {isLocked && (
+                <TouchableOpacity
+                    style={styles.lockedOverlay}
+                    activeOpacity={0.9}
+                    onPress={onPressLock}
+                >
+                    <Icon name="lock-closed" size={40} color="#FFF" />
+                    <Text style={styles.lockedText}>Premium Feature</Text>
+                    <Text style={styles.lockedSubText}>Tap to Unlock</Text>
+                </TouchableOpacity>
+            )}
 
             <View style={styles.footer}>
                 <View>
@@ -32,14 +47,15 @@ export const CatCard = memo(({ cat, isFavorite, onToggleFavorite }: Props) => {
 
                 <TouchableOpacity
                     style={styles.heartButton}
-                    onPress={() => onToggleFavorite(cat)}
+                    onPress={() => !isLocked && onToggleFavorite(cat)}
                     activeOpacity={0.7}
+                    disabled={isLocked}
                 >
                     {/* Si no has configurado vector-icons, cambia Icon por un <Text>❤️</Text> */}
                     <Icon
-                        name={isFavorite ? 'heart' : 'heart-outline'}
+                        name={isLocked ? 'lock-closed-outline' : (isFavorite ? 'heart' : 'heart-outline')}
                         size={28}
-                        color={isFavorite ? '#E74C3C' : '#000'}
+                        color={isLocked ? '#999' : (isFavorite ? '#E74C3C' : '#000')}
                     />
                 </TouchableOpacity>
             </View>
@@ -87,5 +103,24 @@ const styles = StyleSheet.create({
     },
     heartButton: {
         padding: 5,
+    },
+    lockedOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+        borderRadius: 16, // Match container border radius
+    },
+    lockedText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontSize: 18,
+        marginTop: 10,
+    },
+    lockedSubText: {
+        color: '#DDD',
+        fontSize: 14,
+        marginTop: 4,
     },
 });

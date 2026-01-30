@@ -5,3 +5,4 @@ export * from './GetCatListUseCase';
 export * from './GetFavoritesUseCase';
 export * from './GetPremiumStatusUseCase';
 export * from './GetBreedsUseCase';
+export * from './RemovePremiumUseCase';

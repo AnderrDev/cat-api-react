@@ -7,8 +7,13 @@ import Icon from 'react-native-vector-icons/Ionicons';
 const { width } = Dimensions.get('window');
 
 export const PremiumScreen = () => {
-    const { details, isLoading } = usePremiumDetails();
+    const { details, isLoading, removePremium } = usePremiumDetails();
     const navigation = useNavigation();
+
+    const handleRemove = async () => {
+        await removePremium();
+        navigation.goBack();
+    };
 
     if (isLoading) {
         return (
@@ -79,6 +84,13 @@ export const PremiumScreen = () => {
                     Tu tarjeta está tokenizada. TheCatAPI no tiene acceso a tus datos reales.
                 </Text>
             </View>
+
+            <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleRemove}
+            >
+                <Text style={styles.cancelText}>Cancelar Suscripción</Text>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -200,5 +212,19 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontStyle: 'italic',
         textAlign: 'center',
+    },
+    cancelButton: {
+        marginHorizontal: 20,
+        padding: 15,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E74C3C',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    cancelText: {
+        color: '#E74C3C',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });
