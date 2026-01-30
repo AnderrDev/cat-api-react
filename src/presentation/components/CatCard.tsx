@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import { FadeInImage } from './FadeInImage';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Cat } from '@domain/entities';
 
@@ -17,13 +17,9 @@ const CARD_HEIGHT = 300;
 export const CatCard = memo(({ cat, isFavorite, onToggleFavorite }: Props) => {
     return (
         <View style={styles.container}>
-            <FastImage
-                style={styles.image}
-                source={{
-                    uri: cat.url,
-                    priority: FastImage.priority.normal,
-                }}
-                resizeMode={FastImage.resizeMode.cover}
+            <FadeInImage
+                containerStyle={styles.image}
+                uri={cat.url}
             />
 
             <View style={styles.footer}>

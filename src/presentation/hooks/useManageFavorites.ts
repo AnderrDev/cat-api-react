@@ -1,43 +1,60 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRepository } from '@core/di/DiContext';
 import { Cat, LimitReachedError } from '@domain/entities';
+import { useCallback, useEffect, useState } from 'react';
 
 export const useManageFavorites = () => {
     const { getFavoritesUseCase, toggleFavoriteUseCase } = useRepository();
-    const queryClient = useQueryClient();
 
-    // 1. Query para leer favoritos (Reemplaza al useEffect)
-    const { data: favorites = [] } = useQuery({
-        queryKey: ['favorites'],
-        queryFn: async () => await getFavoritesUseCase.execute(),
-    });
+    // 1. Estado Local
+    const [favorites, setFavorites] = useState<Cat[]>([]);
+    const [error, setError] = useState<Error | null>(null);
 
-    // 2. Mutación para agregar/quitar (Maneja la lógica de éxito/error)
-    const mutation = useMutation({
-        mutationFn: async (cat: Cat) => {
-            return await toggleFavoriteUseCase.execute(cat);
-        },
-        onSuccess: () => {
-            // Si tuvo éxito, invalida la caché para que se refresque la lista sola
-            queryClient.invalidateQueries({ queryKey: ['favorites'] });
-        },
-        // IMPORTANTE: Aquí manejamos el error de negocio sin ensuciar la UI
-        onError: (error) => {
-            if (error instanceof LimitReachedError) {
-                // Opción A: Lanzar evento para navegación (lo veremos en el Screen)
-                // Opción B (Rápida): Mostrar alerta aquí (aunque es menos limpio)
-                console.log("Límite alcanzado");
-            }
+    // 2. Cargar favoritos al inicio
+    const loadFavorites = useCallback(async () => {
+        try {
+            const data = await getFavoritesUseCase.execute();
+            setFavorites(data);
+        } catch (e) {
+            console.error("Error loading favorites", e);
         }
-    });
+    }, [getFavoritesUseCase]);
 
-    // Helper para saber si un gato específico es favorito
-    const isFavorite = (catId: string) => favorites.some(c => c.id === catId);
+    useEffect(() => {
+        loadFavorites();
+    }, [loadFavorites]);
+
+    // 3. Función para alternar favorito (Mutation manual)
+    const toggleFavorite = async (cat: Cat) => {
+        setError(null); // Resetear error
+        try {
+            // Intentamos la operación (que puede fallar por límite)
+            const isNowFavorite = await toggleFavoriteUseCase.execute(cat);
+
+            // Actualización Optimista o Recarga
+            // En este caso, recargamos la lista para asegurar consistencia con lo guardado
+            await loadFavorites();
+
+            return isNowFavorite;
+        } catch (err) {
+            // Manejo del error específico
+            if (err instanceof LimitReachedError) {
+                // Propagar el error para que la UI lo maneje (Alertas, etc)
+                throw err;
+            }
+            setError(err instanceof Error ? err : new Error('Unknown Error'));
+            throw err;
+        }
+    };
+
+    // Helper para UI
+    const isFavorite = useCallback((catId: string) => {
+        return favorites.some(c => c.id === catId);
+    }, [favorites]);
 
     return {
         favorites,
         isFavorite,
-        toggleFavorite: mutation.mutateAsync, // Exponemos la función
-        error: mutation.error, // Exponemos el error para que la Screen decida qué hacer
+        toggleFavorite,
+        error,
     };
 };
