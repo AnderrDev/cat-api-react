@@ -4,18 +4,18 @@ import { CreditCard, SecurityToken } from '@domain/entities';
 export class TokenizePaymentMethodUseCase {
     constructor(
         private paymentRepository: PaymentRepository,
-        private secureStorageRepository: SecureStorageRepository // Necesitamos guardar el token también
+        private secureStorageRepository: SecureStorageRepository // We also need to save the token
     ) { }
 
     async execute(card: CreditCard): Promise<SecurityToken> {
-        // 1. Obtener token del proveedor (Mock)
+        // 1. Get token from provider (Mock)
         const token = await this.paymentRepository.tokenizeCard(card);
 
-        // 2. Guardar token seguro + Info de Tarjeta
+        // 2. Save secure token + Card Info
         const cardInfo = {
             last4: card.cardNumber.slice(-4),
             cardHolder: card.cardHolder,
-            brand: 'Visa (Simulado)', // En un SDK real esto viene del emisor
+            brand: 'Visa (Simulated)', // In a real SDK this comes from the issuer
             expiration: card.expirationDate,
         };
 

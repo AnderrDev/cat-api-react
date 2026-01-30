@@ -50,7 +50,7 @@ describe('TokenizePaymentMethodUseCase', () => {
             cardInfo: {
                 last4: '4242',
                 cardHolder: 'John Doe',
-                brand: 'Visa (Simulado)',
+                brand: 'Visa (Simulated)',
                 expiration: '12/25'
             }
         });

@@ -12,7 +12,7 @@ export const LinkCardScreen = () => {
         control, errors, isValid, isSubmitting, formatCardNumber, formatExpiration, submit, rules
     } = useLinkCard();
 
-    // Observar valores en tiempo real para la vista previa
+    // Watch values in real time for the preview
     const cardNumber = useWatch({ control, name: 'cardNumber', defaultValue: '' });
     const name = useWatch({ control, name: 'name', defaultValue: '' });
     const expiration = useWatch({ control, name: 'expiration', defaultValue: '' });
@@ -28,13 +28,13 @@ export const LinkCardScreen = () => {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.header}>
-                        <Text style={styles.title}>Vincular Método de Pago</Text>
+                        <Text style={styles.title}>Link Payment Method</Text>
                         <Text style={styles.subtitle}>
-                            Desbloquea favoritos ilimitados vinculando tu tarjeta de crédito de prueba.
+                            Unlock unlimited favorites by linking your test credit card.
                         </Text>
                     </View>
 
-                    {/* Vista Previa de Tarjeta */}
+                    {/* Card Preview */}
                     <CreditCardDisplay
                         cardNumber={cardNumber}
                         cardHolder={name}
@@ -42,9 +42,9 @@ export const LinkCardScreen = () => {
                         variant="preview"
                     />
 
-                    {/* Formulario */}
+                    {/* Form */}
                     <View style={styles.form}>
-                        <Text style={styles.label}>Nombre en la tarjeta</Text>
+                        <Text style={styles.label}>Name on card</Text>
                         <Controller
                             control={control}
                             name="name"
@@ -52,7 +52,7 @@ export const LinkCardScreen = () => {
                             render={({ field: { onChange, value } }) => (
                                 <TextInput
                                     style={[styles.input, errors.name && styles.inputError]}
-                                    placeholder="JUAN PEREZ"
+                                    placeholder="JOHN DOE"
                                     value={value}
                                     onChangeText={(text) => onChange(text.toUpperCase())}
                                     autoCapitalize="characters"
@@ -61,7 +61,7 @@ export const LinkCardScreen = () => {
                         />
                         {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
 
-                        <Text style={styles.label}>Número de tarjeta</Text>
+                        <Text style={styles.label}>Card number</Text>
                         <Controller
                             control={control}
                             name="cardNumber"
@@ -102,7 +102,7 @@ export const LinkCardScreen = () => {
                             </View>
                             <View style={{ width: 16 }} />
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.label}>Expiración</Text>
+                                <Text style={styles.label}>Expiration</Text>
                                 <Controller
                                     control={control}
                                     name="expiration"
@@ -130,7 +130,7 @@ export const LinkCardScreen = () => {
                             {isSubmitting ? (
                                 <ActivityIndicator color="#FFF" />
                             ) : (
-                                <Text style={styles.buttonText}>VINCULAR TARJETA</Text>
+                                <Text style={styles.buttonText}>LINK CARD</Text>
                             )}
                         </TouchableOpacity>
                     </View>

@@ -23,7 +23,6 @@ export const FeedScreen = () => {
     try {
       await toggleFavorite(cat);
     } catch (error) {
-      // HERE'S THE REQUIREMENT MAGIC
       if (error instanceof LimitReachedError) {
         Alert.alert(
           "Límite Gratuito Alcanzado",
