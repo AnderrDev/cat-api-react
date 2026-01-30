@@ -1,23 +1,32 @@
 import * as Keychain from 'react-native-keychain';
-import { SecurityToken } from '@domain/entities';
+import { SecurityToken, StoredPaymentDetails } from '@domain/entities';
 
 export interface SecureStorageDataSource {
-    saveToken(token: SecurityToken): Promise<void>;
-    getToken(): Promise<SecurityToken | null>;
+    savePaymentDetails(details: StoredPaymentDetails): Promise<void>;
+    getPaymentDetails(): Promise<StoredPaymentDetails | null>;
     clearToken(): Promise<void>;
 }
 
 export class SecureStorageDataSourceImpl implements SecureStorageDataSource {
 
-    async saveToken(token: SecurityToken): Promise<void> {
-        await Keychain.setGenericPassword('auth_token', JSON.stringify(token));
+    async savePaymentDetails(details: StoredPaymentDetails): Promise<void> {
+        await Keychain.setGenericPassword('auth_token', JSON.stringify(details));
     }
 
-    async getToken(): Promise<SecurityToken | null> {
+    async getPaymentDetails(): Promise<StoredPaymentDetails | null> {
         try {
             const credentials = await Keychain.getGenericPassword();
             if (credentials) {
-                return JSON.parse(credentials.password);
+                // Check legacy (just token) vs new (object)
+                const parsed = JSON.parse(credentials.password);
+                if (parsed.token) {
+                    return parsed;
+                }
+                // Migration fallback: if it's just the old token structure (unlikely in this new flow but good practice)
+                return {
+                    token: parsed,
+                    cardInfo: { last4: '0000', cardHolder: 'Unknown', brand: 'Generic' }
+                };
             }
             return null;
         } catch (error) {

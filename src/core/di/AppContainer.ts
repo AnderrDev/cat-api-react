@@ -1,7 +1,9 @@
 import { CatRepositoryImpl, PaymentRepositoryImpl, SecureStorageRepositoryImpl, FavoritesRepositoryImpl } from '@data/repositories';
 import { AxiosClient } from '@core/api/AxiosClient';
 import { DIContainer } from '.';
-import { ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase, GetBreedsUseCase } from '@domain/usecases';
+import {
+    ToggleFavoriteUseCase, TokenizePaymentMethodUseCase, GetCatListUseCase, GetFavoritesUseCase, GetPremiumStatusUseCase, GetBreedsUseCase, GetPremiumDetailsUseCase
+} from '@domain/usecases';
 
 import { CatDataSourceImpl, FavoritesDataSourceImpl, SecureStorageDataSourceImpl } from '@data/datasources';
 import { AsyncStorageImpl } from '@core/local/AsyncStorageImpl';
@@ -24,6 +26,7 @@ const favoritesRepository = new FavoritesRepositoryImpl(favoritesLocalDataSource
 // 3. Use Cases
 const toggleFavoriteUseCase = new ToggleFavoriteUseCase(secureStorageRepository, favoritesRepository);
 const tokenizePaymentMethodUseCase = new TokenizePaymentMethodUseCase(paymentRepository, secureStorageRepository);
+const getPremiumDetailsUseCase = new GetPremiumDetailsUseCase(secureStorageRepository);
 const getCatListUseCase = new GetCatListUseCase(catRepository);
 
 const getFavoritesUseCase = new GetFavoritesUseCase(favoritesRepository);
@@ -43,4 +46,5 @@ export const appContainer: DIContainer = {
     getFavoritesUseCase,
     getPremiumStatusUseCase,
     getBreedsUseCase,
+    getPremiumDetailsUseCase,
 };

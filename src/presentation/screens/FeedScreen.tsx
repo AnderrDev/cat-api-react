@@ -68,9 +68,12 @@ export const FeedScreen = () => {
         <View style={styles.titleContainer}>
           <Text style={styles.headerTitle}>CatWallet</Text>
           {isPremium && (
-            <View style={styles.premiumBadge}>
+            <TouchableOpacity
+              style={styles.premiumBadge}
+              onPress={() => navigation.navigate('Premium')}
+            >
               <Text style={styles.premiumText}>PRO</Text>
-            </View>
+            </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity

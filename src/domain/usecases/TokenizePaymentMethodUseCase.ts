@@ -11,9 +11,17 @@ export class TokenizePaymentMethodUseCase {
         // 1. Obtener token del proveedor (Mock)
         const token = await this.paymentRepository.tokenizeCard(card);
 
-        // 2. Guardar token seguro (Keychain)
-        // El diagrama implica que el caso de uso maneja el flujo completo
-        await this.secureStorageRepository.saveToken(token);
+        // 2. Guardar token seguro + Info de Tarjeta
+        const cardInfo = {
+            last4: card.cardNumber.slice(-4),
+            cardHolder: card.cardHolder,
+            brand: 'Visa (Simulado)', // En un SDK real esto viene del emisor
+        };
+
+        await this.secureStorageRepository.savePaymentDetails({
+            token,
+            cardInfo
+        });
 
         return token;
     }

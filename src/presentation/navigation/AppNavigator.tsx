@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { FeedScreen, LinkCardScreen, FavoritesScreen } from '@presentation/screens';
+import { FeedScreen, LinkCardScreen, FavoritesScreen, PremiumScreen } from '@presentation/screens';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,6 +31,13 @@ export const AppNavigator = () => {
                     options={{
                         headerShown: true,
                         title: 'Favoritos',
+                    }}
+                />
+                <Stack.Screen
+                    name="Premium"
+                    component={PremiumScreen}
+                    options={{
+                        headerShown: false,
                     }}
                 />
             </Stack.Navigator>

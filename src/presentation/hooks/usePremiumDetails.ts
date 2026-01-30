@@ -1,40 +1,38 @@
 import { useRepository } from '@core/di/DiContext';
+import { StoredPaymentDetails } from '@domain/entities';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 
-export const usePremiumStatus = () => {
-    const { getPremiumStatusUseCase } = useRepository();
-    const [isPremium, setIsPremium] = useState(false);
+export const usePremiumDetails = () => {
+    const { getPremiumDetailsUseCase } = useRepository();
+    const [details, setDetails] = useState<StoredPaymentDetails | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useFocusEffect(
         useCallback(() => {
             let isActive = true;
 
-            const checkStatus = async () => {
+            const load = async () => {
                 try {
-                    const status = await getPremiumStatusUseCase.execute();
+                    const data = await getPremiumDetailsUseCase.execute();
                     if (isActive) {
-                        setIsPremium(status);
+                        setDetails(data);
                     }
                 } catch (error) {
-                    console.error("Error checking premium status:", error);
+                    console.error("Error loading premium details:", error);
                 } finally {
                     if (isActive) {
                         setIsLoading(false);
                     }
                 }
             };
-            checkStatus();
+            load();
 
             return () => {
                 isActive = false;
             };
-        }, [getPremiumStatusUseCase])
+        }, [getPremiumDetailsUseCase])
     );
 
-    return {
-        isPremium,
-        isLoading,
-    };
+    return { details, isLoading };
 };
