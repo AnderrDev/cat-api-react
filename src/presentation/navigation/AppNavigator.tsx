@@ -2,13 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FeedScreen, LinkCardScreen, FavoritesScreen } from '@presentation/screens';
-
-// Tipado de rutas
-export type RootStackParamList = {
-    Feed: undefined;
-    LinkCard: undefined;
-    Favorites: undefined;
-};
+import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -36,7 +30,7 @@ export const AppNavigator = () => {
                     component={FavoritesScreen}
                     options={{
                         headerShown: true,
-                        title: 'Favoritos ❤️',
+                        title: 'Favoritos',
                     }}
                 />
             </Stack.Navigator>

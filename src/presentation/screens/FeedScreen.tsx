@@ -7,13 +7,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useCatFeed, useManageFavorites, usePremiumStatus } from '@presentation/hooks';
 import { Cat, LimitReachedError } from '@domain/entities';
 import { CatCard, BreedFilter } from '@presentation/components';
-
-// Definimos los tipos de navegación aquí (o impórtalos de un archivo types.ts)
-type RootStackParamList = {
-  Feed: undefined;
-  LinkCard: undefined;
-  Favorites: undefined;
-};
+import { RootStackParamList } from '@presentation/navigation/types';
 
 export const FeedScreen = () => {
   // 1. Hooks de Datos y Lógica

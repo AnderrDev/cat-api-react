@@ -5,14 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useManageFavorites } from '@presentation/hooks';
 import { Cat, LimitReachedError } from '@domain/entities';
 import { CatCard } from '@presentation/components';
-
-// This implies we need to export RootStackParamList from somewhere central if we want to avoid duplication
-// relying on current AppNavigator structure
-type RootStackParamList = {
-    Feed: undefined;
-    LinkCard: undefined;
-    Favorites: undefined;
-};
+import { RootStackParamList } from '@presentation/navigation/types';
 
 export const FavoritesScreen = () => {
     const { favorites, isFavorite, toggleFavorite } = useManageFavorites();
