@@ -72,7 +72,7 @@ export const FeedScreen = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.headerTitle}>CatWallet 🐱</Text>
+          <Text style={styles.headerTitle}>CatWallet</Text>
           {isPremium && (
             <View style={styles.premiumBadge}>
               <Text style={styles.premiumText}>PRO</Text>
