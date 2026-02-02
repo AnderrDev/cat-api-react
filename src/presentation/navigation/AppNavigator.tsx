@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { FeedScreen, LinkCardScreen, FavoritesScreen, PremiumScreen } from '@presentation/screens';
+import { FeedScreen, LinkCardScreen, FavoritesScreen, PremiumScreen, WalletScreen } from '@presentation/screens';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -38,6 +38,16 @@ export const AppNavigator = () => {
                     component={PremiumScreen}
                     options={{
                         headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="Wallet"
+                    component={WalletScreen}
+                    options={{
+                        headerShown: true,
+                        title: 'Bóveda Segura',
+                        headerStyle: { backgroundColor: '#121212' },
+                        headerTintColor: '#fff',
                     }}
                 />
             </Stack.Navigator>

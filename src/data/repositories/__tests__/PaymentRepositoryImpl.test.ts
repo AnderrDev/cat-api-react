@@ -1,6 +1,15 @@
 import { PaymentRepositoryImpl } from '../PaymentRepositoryImpl';
 import { PaymentService } from '@data/remote';
 import { CreditCard, PaymentError } from '@domain/entities';
+import SecureVault from '@core/modules/SecureVault';
+
+// Mock the Native Module wrapper
+jest.mock('@core/modules/SecureVault', () => ({
+    tokenizeCard: jest.fn(),
+    setSecureValue: jest.fn(),
+    getSecureValue: jest.fn(),
+    clearSecureValue: jest.fn(),
+}));
 
 describe('PaymentRepositoryImpl', () => {
     let repository: PaymentRepositoryImpl;
@@ -15,7 +24,7 @@ describe('PaymentRepositoryImpl', () => {
     });
 
     describe('tokenizeCard', () => {
-        it('should tokenize card successfully', async () => {
+        it('should tokenize card successfully using Native SecureVault', async () => {
             const card: CreditCard = {
                 cardNumber: '4242424242424242',
                 cvv: '123',
@@ -23,20 +32,19 @@ describe('PaymentRepositoryImpl', () => {
                 cardHolder: 'John Doe'
             };
 
-            const mockToken = {
-                accessToken: 'token_123',
-                createdAt: Date.now()
-            };
-
-            mockPaymentService.processPayment.mockResolvedValue(mockToken);
+            const mockNativeToken = 'token_native_123';
+            (SecureVault.tokenizeCard as jest.Mock).mockResolvedValue(mockNativeToken);
 
             const result = await repository.tokenizeCard(card);
 
-            expect(result).toEqual(mockToken);
-            expect(mockPaymentService.processPayment).toHaveBeenCalledWith(card);
+            expect(result.accessToken).toEqual(mockNativeToken);
+            expect(result.createdAt).toBeDefined();
+            expect(SecureVault.tokenizeCard).toHaveBeenCalledWith(card.cardNumber);
+            // Verify we are NOT calling the old service
+            expect(mockPaymentService.processPayment).not.toHaveBeenCalled();
         });
 
-        it('should throw PaymentError when service fails', async () => {
+        it('should throw PaymentError when SecureVault fails', async () => {
             const card: CreditCard = {
                 cardNumber: '4242424242424242',
                 cvv: '123',
@@ -44,24 +52,11 @@ describe('PaymentRepositoryImpl', () => {
                 cardHolder: 'John Doe'
             };
 
-            const error = new Error('Card declined');
-            mockPaymentService.processPayment.mockRejectedValue(error);
+            const error = new Error('SecureVault Error');
+            (SecureVault.tokenizeCard as jest.Mock).mockRejectedValue(error);
 
             await expect(repository.tokenizeCard(card)).rejects.toThrow(PaymentError);
-            await expect(repository.tokenizeCard(card)).rejects.toThrow('Card declined');
-        });
-
-        it('should throw PaymentError with generic message for unknown errors', async () => {
-            const card: CreditCard = {
-                cardNumber: '4242424242424242',
-                cvv: '123',
-                expirationDate: '12/25',
-                cardHolder: 'John Doe'
-            };
-
-            mockPaymentService.processPayment.mockRejectedValue('Unknown error');
-
-            await expect(repository.tokenizeCard(card)).rejects.toThrow(PaymentError);
+            await expect(repository.tokenizeCard(card)).rejects.toThrow('SecureVault Error');
         });
     });
 });

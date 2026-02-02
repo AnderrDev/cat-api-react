@@ -2,19 +2,25 @@ import { PaymentService } from '@data/remote';
 import { CreditCard, SecurityToken, PaymentError } from '@domain/entities';
 import { PaymentRepository } from '@domain/repositories';
 import { logger } from '@core/utils';
+import SecureVault from '@core/modules/SecureVault';
 
 export class PaymentRepositoryImpl implements PaymentRepository {
     constructor(private paymentService: PaymentService) { }
 
     async tokenizeCard(card: CreditCard): Promise<SecurityToken> {
         try {
-            logger.info('Attempting to tokenize payment method', 'PaymentRepository', {
+            logger.info('Attempting to tokenize payment method via Native SecureVault', 'PaymentRepository', {
                 cardHolder: card.cardHolder,
                 last4: card.cardNumber.slice(-4)
             });
 
-            // Call injected service (Mock or Real)
-            const token = await this.paymentService.processPayment(card);
+            // Call Native Module directly
+            const rawToken = await SecureVault.tokenizeCard(card.cardNumber);
+
+            const token: SecurityToken = {
+                accessToken: rawToken,
+                createdAt: Date.now()
+            };
 
             logger.info('Payment method tokenized successfully', 'PaymentRepository');
             return token;

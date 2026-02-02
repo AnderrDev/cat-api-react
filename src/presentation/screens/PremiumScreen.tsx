@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowBackIcon } from '@presentation/components/icons';
 import { usePremiumDetails } from '@presentation/hooks';
@@ -32,7 +32,7 @@ export const PremiumScreen = () => {
         );
     }
 
-    const { cardInfo } = details;
+    const { cardInfo, token } = details;
 
     return (
         <View style={styles.container}>
@@ -68,6 +68,15 @@ export const PremiumScreen = () => {
                 </View>
                 <Text style={styles.securityNote}>
                     Tu tarjeta está tokenizada. TheCatAPI no tiene acceso a tus datos reales.
+                </Text>
+            </View>
+
+            {/* Token Display */}
+            <View style={styles.resultContainer}>
+                <Text style={styles.resultLabel}>✅ Token Activo:</Text>
+                <Text style={styles.token}>{token.accessToken}</Text>
+                <Text style={styles.info}>
+                    Token Seguro en Hardware Store Nativo.
                 </Text>
             </View>
 
@@ -201,4 +210,30 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
+    resultContainer: {
+        marginHorizontal: 20,
+        marginTop: 20,
+        padding: 15,
+        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#4CAF50',
+    },
+    resultLabel: {
+        color: '#4CAF50',
+        fontWeight: 'bold',
+        marginBottom: 8,
+        fontSize: 14,
+    },
+    token: {
+        color: '#333',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+        marginBottom: 8,
+    },
+    info: {
+        color: '#888',
+        fontSize: 12,
+        fontStyle: 'italic',
+    }
 });

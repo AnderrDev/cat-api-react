@@ -1,25 +1,21 @@
-import * as Keychain from 'react-native-keychain';
+import SecureVault from '../modules/SecureVault';
 import { SecureStorage } from './SecureStorage';
 
 export class SecureStorageImpl implements SecureStorage {
     async setSecureValue(key: string, value: string): Promise<void> {
-        await Keychain.setGenericPassword(key, value);
+        await SecureVault.setSecureValue(key, value);
     }
 
     async getSecureValue(key: string): Promise<string | null> {
-        try {
-            const credentials = await Keychain.getGenericPassword();
-            if (credentials && credentials.username === key) {
-                return credentials.password;
-            }
-            return null;
-        } catch (error) {
-            console.error('Error retrieving secure value', error);
-            return null;
-        }
+        return await SecureVault.getSecureValue(key);
     }
 
-    async clearSecureValue(_key: string): Promise<void> {
-        await Keychain.resetGenericPassword();
+    async clearSecureValue(key: string): Promise<void> {
+        await SecureVault.clearSecureValue(key);
+    }
+
+    // NEW METHOD SPECIAL FOR WALLET
+    async tokenizeCard(cardNumber: string): Promise<string> {
+        return await SecureVault.tokenizeCard(cardNumber);
     }
 }
