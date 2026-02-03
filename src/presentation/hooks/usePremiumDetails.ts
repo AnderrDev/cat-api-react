@@ -2,6 +2,8 @@ import { useRepository } from '@core/di/DiContext';
 import { StoredPaymentDetails } from '@domain/entities';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
+import { pipe } from 'fp-ts/function';
+import { fold } from 'fp-ts/Either';
 
 export const usePremiumDetails = () => {
     const { getPremiumDetailsUseCase, removePremiumUseCase } = useRepository();
@@ -13,17 +15,24 @@ export const usePremiumDetails = () => {
             let isActive = true;
 
             const load = async () => {
-                try {
-                    const data = await getPremiumDetailsUseCase.execute();
-                    if (isActive) {
-                        setDetails(data);
-                    }
-                } catch (error) {
-                    console.error("Error loading premium details:", error);
-                } finally {
-                    if (isActive) {
-                        setIsLoading(false);
-                    }
+                const result = await getPremiumDetailsUseCase.execute();
+
+                pipe(
+                    result,
+                    fold(
+                        (failure) => {
+                            console.error("Error loading premium details:", failure.message);
+                        },
+                        (data) => {
+                            if (isActive) {
+                                setDetails(data);
+                            }
+                        }
+                    )
+                );
+
+                if (isActive) {
+                    setIsLoading(false);
                 }
             };
             load();
@@ -35,13 +44,19 @@ export const usePremiumDetails = () => {
     );
 
     const removePremium = async () => {
-        try {
-            await removePremiumUseCase.execute();
-            // Invalidate/Update local state if needed, or navigation will handle clean up
-            setDetails(null);
-        } catch (error) {
-            console.error("Error removing premium:", error);
-        }
+        const result = await removePremiumUseCase.execute();
+        pipe(
+            result,
+            fold(
+                (failure) => {
+                    console.error("Error removing premium:", failure.message);
+                },
+                () => {
+                    // Update local state
+                    setDetails(null);
+                }
+            )
+        );
     };
 
     return { details, isLoading, removePremium };

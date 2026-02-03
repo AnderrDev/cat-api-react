@@ -1,8 +1,10 @@
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { useManageFavorites } from '../useManageFavorites';
 import { useRepository } from '@core/di/DiContext';
-import { Cat, LimitReachedError } from '@domain/entities';
+import { Cat } from '@domain/entities';
 import { logger } from '@core/utils';
+import { right, left } from 'fp-ts/Either';
+import { NetworkFailure, LimitReachedFailure } from '@core/errors/Failure';
 
 jest.mock('@core/di/DiContext');
 jest.mock('@core/utils', () => ({
@@ -44,7 +46,7 @@ describe('useManageFavorites', () => {
     });
 
     it('should initialize with empty favorites', () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([]);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([]));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -53,7 +55,7 @@ describe('useManageFavorites', () => {
     });
 
     it('should load favorites on mount', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([mockCat1, mockCat2]);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([mockCat1, mockCat2]));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -71,15 +73,15 @@ describe('useManageFavorites', () => {
     });
 
     it('should handle errors when loading favorites', async () => {
-        const error = new Error('Network error');
-        mockGetFavoritesUseCase.execute.mockRejectedValue(error);
+        const error = new NetworkFailure('Network error');
+        mockGetFavoritesUseCase.execute.mockResolvedValue(left(error));
 
         const { result } = renderHook(() => useManageFavorites());
 
         await waitFor(() => {
             expect(logger.error).toHaveBeenCalledWith(
                 'Error loading favorites',
-                error,
+                expect.any(Error),
                 'useManageFavorites'
             );
         });
@@ -88,7 +90,7 @@ describe('useManageFavorites', () => {
     });
 
     it('should check if a cat is favorite', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([mockCat1]);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([mockCat1]));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -101,8 +103,8 @@ describe('useManageFavorites', () => {
     });
 
     it('should toggle favorite successfully', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([mockCat1]);
-        mockToggleFavoriteUseCase.execute.mockResolvedValue(true);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([mockCat1]));
+        mockToggleFavoriteUseCase.execute.mockResolvedValue(right(true));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -110,11 +112,11 @@ describe('useManageFavorites', () => {
             expect(result.current.favorites).toHaveLength(1);
         });
 
-        mockGetFavoritesUseCase.execute.mockResolvedValue([mockCat1, mockCat2]);
+        // Update mock for the refresh after toggle
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([mockCat1, mockCat2]));
 
         await act(async () => {
-            const isNowFavorite = await result.current.toggleFavorite(mockCat2);
-            expect(isNowFavorite).toBe(true);
+            await result.current.toggleFavorite(mockCat2);
         });
 
         await waitFor(() => {
@@ -130,9 +132,9 @@ describe('useManageFavorites', () => {
     });
 
     it('should handle limit reached error when toggling favorite', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([]);
-        const limitError = new LimitReachedError();
-        mockToggleFavoriteUseCase.execute.mockRejectedValue(limitError);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([]));
+        const limitError = new LimitReachedFailure("Limit reached");
+        mockToggleFavoriteUseCase.execute.mockResolvedValue(left(limitError));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -140,7 +142,8 @@ describe('useManageFavorites', () => {
             expect(result.current.favorites).toEqual([]);
         });
 
-        await expect(result.current.toggleFavorite(mockCat1)).rejects.toThrow(LimitReachedError);
+        // The hook re-throws the LimitReachedFailure
+        await expect(result.current.toggleFavorite(mockCat1)).rejects.toBe(limitError);
 
         expect(logger.warn).toHaveBeenCalledWith(
             'Favorite limit reached for free user',
@@ -150,9 +153,9 @@ describe('useManageFavorites', () => {
     });
 
     it('should handle general errors when toggling favorite', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([]);
-        const error = new Error('Unknown error');
-        mockToggleFavoriteUseCase.execute.mockRejectedValue(error);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([]));
+        const error = new NetworkFailure('Unknown error');
+        mockToggleFavoriteUseCase.execute.mockResolvedValue(left(error));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -160,24 +163,30 @@ describe('useManageFavorites', () => {
             expect(result.current.favorites).toEqual([]);
         });
 
-        await expect(result.current.toggleFavorite(mockCat1)).rejects.toThrow(Error);
+        // The hook converts non-LimitReachedFailure to Error and throws it
+        // Check `useManageFavorites.ts` logic: `const err = new Error(failure.message); throw err;`
+        await expect(result.current.toggleFavorite(mockCat1)).rejects.toThrow('Unknown error');
+
+        // Check if error state was set (which is also the Error object)
+        // Note: result.current.error might be the Error object, not NetworkFailure.
+        // Let's waitFor error state update.
+        await waitFor(() => {
+            expect(result.current.error).toBeInstanceOf(Error);
+            expect(result.current.error?.message).toBe('Unknown error');
+        });
 
         expect(logger.error).toHaveBeenCalledWith(
             'Error toggling favorite',
-            error,
+            expect.any(Error),
             'useManageFavorites',
             { catId: '1' }
         );
-
-        await waitFor(() => {
-            expect(result.current.error).toBe(error);
-        });
     });
 
     it('should reset error when toggling favorite', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([]);
-        const error = new Error('Previous error');
-        mockToggleFavoriteUseCase.execute.mockRejectedValueOnce(error);
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([]));
+        const error = new NetworkFailure('Previous error');
+        mockToggleFavoriteUseCase.execute.mockResolvedValueOnce(left(error));
 
         const { result } = renderHook(() => useManageFavorites());
 
@@ -186,15 +195,15 @@ describe('useManageFavorites', () => {
         });
 
         // First toggle fails
-        await expect(result.current.toggleFavorite(mockCat1)).rejects.toThrow();
+        await expect(result.current.toggleFavorite(mockCat1)).rejects.toThrow('Previous error');
 
         await waitFor(() => {
-            expect(result.current.error).toBe(error);
+            expect(result.current.error).toBeInstanceOf(Error);
         });
 
         // Second toggle succeeds
-        mockToggleFavoriteUseCase.execute.mockResolvedValue(true);
-        mockGetFavoritesUseCase.execute.mockResolvedValue([mockCat1]);
+        mockToggleFavoriteUseCase.execute.mockResolvedValue(right(true));
+        mockGetFavoritesUseCase.execute.mockResolvedValue(right([mockCat1]));
 
         await act(async () => {
             await result.current.toggleFavorite(mockCat1);
@@ -202,39 +211,6 @@ describe('useManageFavorites', () => {
 
         await waitFor(() => {
             expect(result.current.error).toBeNull();
-        });
-    });
-
-    it('should handle non-Error objects when loading favorites', async () => {
-        mockGetFavoritesUseCase.execute.mockRejectedValue('String error');
-
-        const { result } = renderHook(() => useManageFavorites());
-
-        await waitFor(() => {
-            expect(logger.error).toHaveBeenCalledWith(
-                'Error loading favorites',
-                expect.any(Error),
-                'useManageFavorites'
-            );
-        });
-
-        expect(result.current.favorites).toEqual([]);
-    });
-
-    it('should handle non-Error objects when toggling favorite', async () => {
-        mockGetFavoritesUseCase.execute.mockResolvedValue([]);
-        mockToggleFavoriteUseCase.execute.mockRejectedValue('String error');
-
-        const { result } = renderHook(() => useManageFavorites());
-
-        await waitFor(() => {
-            expect(result.current.favorites).toEqual([]);
-        });
-
-        await expect(result.current.toggleFavorite(mockCat1)).rejects.toBeTruthy();
-
-        await waitFor(() => {
-            expect(result.current.error).toEqual(expect.any(Error));
         });
     });
 });

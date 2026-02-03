@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import SecureVault from '@core/modules/SecureVault';
+import { TokenizeCardUseCase } from '../../../domain/usecases/TokenizeCardUseCase';
+import { WalletRepositoryImpl } from '../../../data/repositories/WalletRepositoryImpl';
+import { pipe } from 'fp-ts/function';
+import { fold } from 'fp-ts/Either';
 
 export const useWalletViewModel = () => {
     const [cardNumber, setCardNumber] = useState('');
@@ -7,20 +10,31 @@ export const useWalletViewModel = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Direct access for Demo/Debug purposes
-    // In production features (like LinkCard), use TokenizePaymentMethodUseCase via PaymentRepository
-
+    const repository = new WalletRepositoryImpl();
+    const tokenizeCardUseCase = new TokenizeCardUseCase(repository);
 
     const handleTokenize = async () => {
         setLoading(true);
         setError(null);
         setToken(null);
+
         try {
-            const generatedToken = await SecureVault.tokenizeCard(cardNumber);
-            setToken(generatedToken);
-            setCardNumber(''); // Clear sensitive data from UI state immediately
+            const result = await tokenizeCardUseCase.execute(cardNumber);
+            pipe(
+                result,
+                fold(
+                    (failure) => {
+                        setError(failure.message);
+                    },
+                    (generatedToken) => {
+                        setToken(generatedToken);
+                        setCardNumber(''); // Clear sensitive data from UI state immediately
+                    }
+                )
+            );
         } catch (err: any) {
-            setError(err.message || "Tokenization Failed");
+            // Should not happen as we catch in repository, but safety net
+            setError(err.message || "Unexpected Error");
         } finally {
             setLoading(false);
         }

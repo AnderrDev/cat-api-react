@@ -3,6 +3,8 @@ import { usePremiumDetails } from '../usePremiumDetails';
 import { useRepository } from '@core/di/DiContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { StoredPaymentDetails } from '@domain/entities';
+import { right, left } from 'fp-ts/Either';
+import { StorageFailure } from '@core/errors/Failure';
 
 jest.mock('@core/di/DiContext');
 jest.mock('@react-navigation/native', () => ({
@@ -44,7 +46,7 @@ describe('usePremiumDetails', () => {
     });
 
     it('should initialize with loading state and null details', () => {
-        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(null);
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(right(null));
 
         const { result } = renderHook(() => usePremiumDetails());
 
@@ -53,7 +55,7 @@ describe('usePremiumDetails', () => {
     });
 
     it('should load premium details successfully', async () => {
-        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(mockPaymentDetails);
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(right(mockPaymentDetails));
 
         const { result } = renderHook(() => usePremiumDetails());
 
@@ -66,7 +68,7 @@ describe('usePremiumDetails', () => {
     });
 
     it('should handle null details when user is not premium', async () => {
-        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(null);
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(right(null));
 
         const { result } = renderHook(() => usePremiumDetails());
 
@@ -79,7 +81,8 @@ describe('usePremiumDetails', () => {
 
     it('should handle errors when loading details', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-        mockGetPremiumDetailsUseCase.execute.mockRejectedValue(new Error('Storage error'));
+        const error = new StorageFailure('Storage error');
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(left(error));
 
         const { result } = renderHook(() => usePremiumDetails());
 
@@ -89,7 +92,7 @@ describe('usePremiumDetails', () => {
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             'Error loading premium details:',
-            expect.any(Error)
+            expect.any(String) // or error object depending on implementation
         );
         expect(result.current.details).toBeNull();
 
@@ -97,8 +100,8 @@ describe('usePremiumDetails', () => {
     });
 
     it('should remove premium successfully', async () => {
-        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(mockPaymentDetails);
-        mockRemovePremiumUseCase.execute.mockResolvedValue(undefined);
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(right(mockPaymentDetails));
+        mockRemovePremiumUseCase.execute.mockResolvedValue(right(undefined));
 
         const { result } = renderHook(() => usePremiumDetails());
 
@@ -109,7 +112,7 @@ describe('usePremiumDetails', () => {
         expect(result.current.details).toEqual(mockPaymentDetails);
 
         // After removal, subsequent loads should return null
-        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(null);
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(right(null));
 
         await act(async () => {
             await result.current.removePremium();
@@ -124,8 +127,9 @@ describe('usePremiumDetails', () => {
 
     it('should handle errors when removing premium', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(mockPaymentDetails);
-        mockRemovePremiumUseCase.execute.mockRejectedValue(new Error('Removal failed'));
+        mockGetPremiumDetailsUseCase.execute.mockResolvedValue(right(mockPaymentDetails));
+        const error = new StorageFailure('Removal failed');
+        mockRemovePremiumUseCase.execute.mockResolvedValue(left(error));
 
         const { result } = renderHook(() => usePremiumDetails());
 
@@ -139,7 +143,7 @@ describe('usePremiumDetails', () => {
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             'Error removing premium:',
-            expect.any(Error)
+            expect.any(String)
         );
 
         consoleErrorSpy.mockRestore();
@@ -153,7 +157,7 @@ describe('usePremiumDetails', () => {
         });
 
         mockGetPremiumDetailsUseCase.execute.mockImplementation(
-            () => new Promise(resolve => setTimeout(() => resolve(mockPaymentDetails), 100))
+            () => new Promise(resolve => setTimeout(() => resolve(right(mockPaymentDetails)), 100))
         );
 
         const { unmount } = renderHook(() => usePremiumDetails());

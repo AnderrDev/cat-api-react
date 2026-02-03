@@ -1,6 +1,8 @@
 import { useRepository } from '@core/di/DiContext';
 import { Cat, Breed } from '@domain/entities';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { pipe } from 'fp-ts/function';
+import { fold } from 'fp-ts/Either';
 
 export const useCatFeed = () => {
     const { getCatListUseCase, getBreedsUseCase } = useRepository();
@@ -20,15 +22,17 @@ export const useCatFeed = () => {
     // 2. Load Breeds (Only on mount)
     useEffect(() => {
         const loadBreeds = async () => {
-            try {
-                const data = await getBreedsUseCase.execute();
-                setBreeds(data);
-            } catch (error) {
-                console.error("Error loading breeds:", error);
-            }
+            const result = await getBreedsUseCase.execute();
+            pipe(
+                result,
+                fold(
+                    (error) => console.error("Error loading breeds:", error.message),
+                    (data) => setBreeds(data)
+                )
+            );
         };
         loadBreeds();
-    }, []);
+    }, [getBreedsUseCase]);
 
     // 3. Load Cats (Main effect)
     useEffect(() => {
@@ -41,24 +45,35 @@ export const useCatFeed = () => {
             }
 
             try {
-                const newCats = await getCatListUseCase.execute(page, 10, selectedBreedId);
+                const result = await getCatListUseCase.execute(page, 10, selectedBreedId);
 
-                if (newCats.length === 0) {
-                    setHasMore(false);
-                } else {
-                    setCats(prev => {
-                        // If page 0, replace everything
-                        if (page === 0) return newCats;
+                pipe(
+                    result,
+                    fold(
+                        (error) => {
+                            console.error("Error loading cats:", error.message);
+                        },
+                        (newCats) => {
+                            if (newCats.length === 0) {
+                                setHasMore(false);
+                            } else {
+                                setCats(prev => {
+                                    // If page 0, replace everything
+                                    if (page === 0) return newCats;
 
-                        // Otherwise, add and filter duplicates
-                        const combined = [...prev, ...newCats];
-                        const uniqueMap = new Map();
-                        combined.forEach(cat => uniqueMap.set(cat.id, cat));
-                        return Array.from(uniqueMap.values());
-                    });
-                }
+                                    // Otherwise, add and filter duplicates
+                                    const combined = [...prev, ...newCats];
+                                    const uniqueMap = new Map();
+                                    combined.forEach(cat => uniqueMap.set(cat.id, cat));
+                                    return Array.from(uniqueMap.values());
+                                });
+                            }
+                        }
+                    )
+                );
             } catch (error) {
-                console.error("Error loading cats:", error);
+                // Should not happen with Either, but safety net
+                console.error("Unexpected error loading cats:", error);
             } finally {
                 setIsLoading(false);
                 setIsFetchingNextPage(false);
@@ -66,7 +81,7 @@ export const useCatFeed = () => {
         };
 
         loadCats();
-    }, [page, selectedBreedId, refetchTrigger]);
+    }, [page, selectedBreedId, refetchTrigger, getCatListUseCase]);
 
     // 4. Handler for filter change
     const handleSelectBreed = (breedId: string | undefined) => {

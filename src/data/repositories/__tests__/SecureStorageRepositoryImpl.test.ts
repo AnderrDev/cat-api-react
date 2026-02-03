@@ -1,6 +1,8 @@
 import { SecureStorageRepositoryImpl } from '../SecureStorageRepositoryImpl';
 import { SecureStorageDataSource } from '@data/datasources';
 import { StoredPaymentDetails } from '@domain/entities';
+import { right, left } from 'fp-ts/Either';
+import { StorageFailure } from '@core/errors/Failure';
 
 describe('SecureStorageRepositoryImpl', () => {
     let repository: SecureStorageRepositoryImpl;
@@ -29,13 +31,14 @@ describe('SecureStorageRepositoryImpl', () => {
             };
             mockDataSource.savePaymentDetails.mockResolvedValue(undefined);
 
-            await repository.savePaymentDetails(details);
+            const result = await repository.savePaymentDetails(details);
 
+            expect(result).toEqual(right(undefined));
             expect(mockDataSource.savePaymentDetails).toHaveBeenCalledWith(details);
             expect(mockDataSource.savePaymentDetails).toHaveBeenCalledTimes(1);
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return StorageFailure when data source fails', async () => {
             const details: StoredPaymentDetails = {
                 token: { accessToken: 'token123', createdAt: Date.now() },
                 cardInfo: {
@@ -48,7 +51,9 @@ describe('SecureStorageRepositoryImpl', () => {
             const error = new Error('Storage error');
             mockDataSource.savePaymentDetails.mockRejectedValue(error);
 
-            await expect(repository.savePaymentDetails(details)).rejects.toThrow('Storage error');
+            const result = await repository.savePaymentDetails(details);
+
+            expect(result).toEqual(left(new StorageFailure('Storage error')));
         });
     });
 
@@ -67,7 +72,7 @@ describe('SecureStorageRepositoryImpl', () => {
 
             const result = await repository.getPaymentDetails();
 
-            expect(result).toEqual(details);
+            expect(result).toEqual(right(details));
             expect(mockDataSource.getPaymentDetails).toHaveBeenCalledTimes(1);
         });
 
@@ -76,14 +81,16 @@ describe('SecureStorageRepositoryImpl', () => {
 
             const result = await repository.getPaymentDetails();
 
-            expect(result).toBeNull();
+            expect(result).toEqual(right(null));
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return StorageFailure when data source fails', async () => {
             const error = new Error('Storage error');
             mockDataSource.getPaymentDetails.mockRejectedValue(error);
 
-            await expect(repository.getPaymentDetails()).rejects.toThrow('Storage error');
+            const result = await repository.getPaymentDetails();
+
+            expect(result).toEqual(left(new StorageFailure('Storage error')));
         });
     });
 
@@ -102,7 +109,7 @@ describe('SecureStorageRepositoryImpl', () => {
 
             const result = await repository.getToken();
 
-            expect(result).toEqual(details.token);
+            expect(result).toEqual(right(details.token));
         });
 
         it('should return null when no payment details exist', async () => {
@@ -110,14 +117,16 @@ describe('SecureStorageRepositoryImpl', () => {
 
             const result = await repository.getToken();
 
-            expect(result).toBeNull();
+            expect(result).toEqual(right(null));
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return StorageFailure when data source fails', async () => {
             const error = new Error('Storage error');
             mockDataSource.getPaymentDetails.mockRejectedValue(error);
 
-            await expect(repository.getToken()).rejects.toThrow('Storage error');
+            const result = await repository.getToken();
+
+            expect(result).toEqual(left(new StorageFailure('Storage error')));
         });
     });
 
@@ -125,16 +134,19 @@ describe('SecureStorageRepositoryImpl', () => {
         it('should clear token through data source', async () => {
             mockDataSource.clearToken.mockResolvedValue(undefined);
 
-            await repository.clearToken();
+            const result = await repository.clearToken();
 
+            expect(result).toEqual(right(undefined));
             expect(mockDataSource.clearToken).toHaveBeenCalledTimes(1);
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return StorageFailure when data source fails', async () => {
             const error = new Error('Storage error');
             mockDataSource.clearToken.mockRejectedValue(error);
 
-            await expect(repository.clearToken()).rejects.toThrow('Storage error');
+            const result = await repository.clearToken();
+
+            expect(result).toEqual(left(new StorageFailure('Storage error')));
         });
     });
 });

@@ -1,4 +1,6 @@
 import { WalletRepository } from '../repositories/WalletRepository';
+import { Failure, InvalidCardFailure } from '../../core/errors/Failure';
+import { Either, left } from 'fp-ts/Either';
 
 export class TokenizeCardUseCase {
     private walletRepository: WalletRepository;
@@ -7,9 +9,9 @@ export class TokenizeCardUseCase {
         this.walletRepository = walletRepository;
     }
 
-    async execute(cardNumber: string): Promise<string> {
+    async execute(cardNumber: string): Promise<Either<Failure, string>> {
         if (!cardNumber || cardNumber.length < 16) {
-            throw new Error("Invalid Card Number");
+            return left(new InvalidCardFailure("Invalid Card Number"));
         }
         return this.walletRepository.tokenizeCard(cardNumber);
     }

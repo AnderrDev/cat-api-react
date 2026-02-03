@@ -1,6 +1,8 @@
 import { TokenizePaymentMethodUseCase } from '../TokenizePaymentMethodUseCase';
 import { PaymentRepository, SecureStorageRepository } from '@domain/repositories';
 import { CreditCard, SecurityToken } from '@domain/entities';
+import { right, left } from 'fp-ts/Either';
+import { PaymentFailure, StorageFailure } from '@core/errors/Failure';
 
 describe('TokenizePaymentMethodUseCase', () => {
     let tokenizePaymentUseCase: TokenizePaymentMethodUseCase;
@@ -38,12 +40,12 @@ describe('TokenizePaymentMethodUseCase', () => {
             createdAt: Date.now()
         };
 
-        mockPaymentRepo.tokenizeCard.mockResolvedValue(mockToken);
-        mockSecureStorageRepo.savePaymentDetails.mockResolvedValue(undefined);
+        mockPaymentRepo.tokenizeCard.mockResolvedValue(right(mockToken));
+        mockSecureStorageRepo.savePaymentDetails.mockResolvedValue(right(undefined));
 
         const result = await tokenizePaymentUseCase.execute(card);
 
-        expect(result).toEqual(mockToken);
+        expect(result).toEqual(right(mockToken));
         expect(mockPaymentRepo.tokenizeCard).toHaveBeenCalledWith(card);
         expect(mockSecureStorageRepo.savePaymentDetails).toHaveBeenCalledWith({
             token: mockToken,
@@ -69,8 +71,8 @@ describe('TokenizePaymentMethodUseCase', () => {
             createdAt: Date.now()
         };
 
-        mockPaymentRepo.tokenizeCard.mockResolvedValue(mockToken);
-        mockSecureStorageRepo.savePaymentDetails.mockResolvedValue(undefined);
+        mockPaymentRepo.tokenizeCard.mockResolvedValue(right(mockToken));
+        mockSecureStorageRepo.savePaymentDetails.mockResolvedValue(right(undefined));
 
         await tokenizePaymentUseCase.execute(card);
 
@@ -91,10 +93,12 @@ describe('TokenizePaymentMethodUseCase', () => {
             cardHolder: 'John Doe'
         };
 
-        const error = new Error('Payment declined');
-        mockPaymentRepo.tokenizeCard.mockRejectedValue(error);
+        const failure = new PaymentFailure('Payment declined');
+        mockPaymentRepo.tokenizeCard.mockResolvedValue(left(failure));
 
-        await expect(tokenizePaymentUseCase.execute(card)).rejects.toThrow('Payment declined');
+        const result = await tokenizePaymentUseCase.execute(card);
+
+        expect(result).toEqual(left(failure));
         expect(mockSecureStorageRepo.savePaymentDetails).not.toHaveBeenCalled();
     });
 
@@ -111,9 +115,12 @@ describe('TokenizePaymentMethodUseCase', () => {
             createdAt: Date.now()
         };
 
-        mockPaymentRepo.tokenizeCard.mockResolvedValue(mockToken);
-        mockSecureStorageRepo.savePaymentDetails.mockRejectedValue(new Error('Storage failed'));
+        const failure = new StorageFailure('Storage failed');
+        mockPaymentRepo.tokenizeCard.mockResolvedValue(right(mockToken));
+        mockSecureStorageRepo.savePaymentDetails.mockResolvedValue(left(failure));
 
-        await expect(tokenizePaymentUseCase.execute(card)).rejects.toThrow('Storage failed');
+        const result = await tokenizePaymentUseCase.execute(card);
+
+        expect(result).toEqual(left(failure));
     });
 });

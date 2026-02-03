@@ -1,6 +1,8 @@
 import { FavoritesRepositoryImpl } from '../FavoritesRepositoryImpl';
 import { FavoritesDataSource } from '@data/datasources';
 import { createMockCat, createMockCats } from '../../../../__tests__/utils/mockFactories';
+import { right, left } from 'fp-ts/Either';
+import { CacheFailure } from '@core/errors/Failure';
 
 describe('FavoritesRepositoryImpl', () => {
     let repository: FavoritesRepositoryImpl;
@@ -23,15 +25,17 @@ describe('FavoritesRepositoryImpl', () => {
 
             const result = await repository.getFavorites();
 
-            expect(result).toEqual(mockFavorites);
+            expect(result).toEqual(right(mockFavorites));
             expect(mockDataSource.getFavorites).toHaveBeenCalledTimes(1);
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return CacheFailure when data source fails', async () => {
             const error = new Error('Storage error');
             mockDataSource.getFavorites.mockRejectedValue(error);
 
-            await expect(repository.getFavorites()).rejects.toThrow('Storage error');
+            const result = await repository.getFavorites();
+
+            expect(result).toEqual(left(new CacheFailure('Storage error')));
         });
     });
 
@@ -40,18 +44,21 @@ describe('FavoritesRepositoryImpl', () => {
             const cat = createMockCat({ id: 'cat-1' });
             mockDataSource.saveFavorite.mockResolvedValue(undefined);
 
-            await repository.saveFavorite(cat);
+            const result = await repository.saveFavorite(cat);
 
+            expect(result).toEqual(right(undefined));
             expect(mockDataSource.saveFavorite).toHaveBeenCalledWith(cat);
             expect(mockDataSource.saveFavorite).toHaveBeenCalledTimes(1);
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return CacheFailure when data source fails', async () => {
             const cat = createMockCat({ id: 'cat-1' });
             const error = new Error('Storage error');
             mockDataSource.saveFavorite.mockRejectedValue(error);
 
-            await expect(repository.saveFavorite(cat)).rejects.toThrow('Storage error');
+            const result = await repository.saveFavorite(cat);
+
+            expect(result).toEqual(left(new CacheFailure('Storage error')));
         });
     });
 
@@ -60,18 +67,21 @@ describe('FavoritesRepositoryImpl', () => {
             const catId = 'cat-123';
             mockDataSource.removeFavorite.mockResolvedValue(undefined);
 
-            await repository.removeFavorite(catId);
+            const result = await repository.removeFavorite(catId);
 
+            expect(result).toEqual(right(undefined));
             expect(mockDataSource.removeFavorite).toHaveBeenCalledWith(catId);
             expect(mockDataSource.removeFavorite).toHaveBeenCalledTimes(1);
         });
 
-        it('should propagate errors from data source', async () => {
+        it('should return CacheFailure when data source fails', async () => {
             const catId = 'cat-123';
             const error = new Error('Storage error');
             mockDataSource.removeFavorite.mockRejectedValue(error);
 
-            await expect(repository.removeFavorite(catId)).rejects.toThrow('Storage error');
+            const result = await repository.removeFavorite(catId);
+
+            expect(result).toEqual(left(new CacheFailure('Storage error')));
         });
     });
 });

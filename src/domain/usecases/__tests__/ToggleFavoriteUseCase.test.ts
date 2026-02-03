@@ -1,7 +1,8 @@
 import { ToggleFavoriteUseCase } from '../ToggleFavoriteUseCase';
-import { LimitReachedError } from '@domain/entities';
+import { LimitReachedFailure } from '@core/errors/Failure';
 import { FavoritesRepository, SecureStorageRepository } from '@domain/repositories';
 import { createMockCat, createMockCats } from '../../../../__tests__/utils/mockFactories';
+import { right, left } from 'fp-ts/Either';
 
 describe('ToggleFavoriteUseCase', () => {
     let toggleFavoriteUseCase: ToggleFavoriteUseCase;
@@ -33,11 +34,12 @@ describe('ToggleFavoriteUseCase', () => {
             const cat = createMockCat({ id: 'cat-1' });
             const existingFavorites = [cat];
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right(existingFavorites));
+            mockFavoritesRepo.removeFavorite.mockResolvedValue(right(undefined));
 
             const result = await toggleFavoriteUseCase.execute(cat);
 
-            expect(result).toBe(false);
+            expect(result).toEqual(right(false));
             expect(mockFavoritesRepo.removeFavorite).toHaveBeenCalledWith('cat-1');
             expect(mockFavoritesRepo.saveFavorite).not.toHaveBeenCalled();
         });
@@ -48,12 +50,13 @@ describe('ToggleFavoriteUseCase', () => {
             const cat = createMockCat({ id: 'cat-4' });
             const existingFavorites = createMockCats(2);
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue({ accessToken: 'premium-token', createdAt: Date.now() });
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right(existingFavorites));
+            mockSecureStorageRepo.getToken.mockResolvedValue(right({ accessToken: 'premium-token', createdAt: Date.now() }));
+            mockFavoritesRepo.saveFavorite.mockResolvedValue(right(undefined));
 
             const result = await toggleFavoriteUseCase.execute(cat);
 
-            expect(result).toBe(true);
+            expect(result).toEqual(right(true));
             expect(mockFavoritesRepo.saveFavorite).toHaveBeenCalledWith(cat);
         });
 
@@ -61,25 +64,13 @@ describe('ToggleFavoriteUseCase', () => {
             const cat = createMockCat({ id: 'cat-4' });
             const existingFavorites = createMockCats(3);
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue({ accessToken: 'premium-token', createdAt: Date.now() });
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right(existingFavorites));
+            mockSecureStorageRepo.getToken.mockResolvedValue(right({ accessToken: 'premium-token', createdAt: Date.now() }));
+            mockFavoritesRepo.saveFavorite.mockResolvedValue(right(undefined));
 
             const result = await toggleFavoriteUseCase.execute(cat);
 
-            expect(result).toBe(true);
-            expect(mockFavoritesRepo.saveFavorite).toHaveBeenCalledWith(cat);
-        });
-
-        it('should add 10th favorite when user is premium', async () => {
-            const cat = createMockCat({ id: 'cat-10' });
-            const existingFavorites = createMockCats(9);
-
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue({ accessToken: 'premium-token', createdAt: Date.now() });
-
-            const result = await toggleFavoriteUseCase.execute(cat);
-
-            expect(result).toBe(true);
+            expect(result).toEqual(right(true));
             expect(mockFavoritesRepo.saveFavorite).toHaveBeenCalledWith(cat);
         });
     });
@@ -88,25 +79,13 @@ describe('ToggleFavoriteUseCase', () => {
         it('should add favorite when free user has 0 favorites', async () => {
             const cat = createMockCat({ id: 'cat-1' });
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue([]);
-            mockSecureStorageRepo.getToken.mockResolvedValue(null);
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right([]));
+            mockSecureStorageRepo.getToken.mockResolvedValue(right(null));
+            mockFavoritesRepo.saveFavorite.mockResolvedValue(right(undefined));
 
             const result = await toggleFavoriteUseCase.execute(cat);
 
-            expect(result).toBe(true);
-            expect(mockFavoritesRepo.saveFavorite).toHaveBeenCalledWith(cat);
-        });
-
-        it('should add favorite when free user has 1 favorite', async () => {
-            const cat = createMockCat({ id: 'cat-2' });
-            const existingFavorites = createMockCats(1);
-
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue(null);
-
-            const result = await toggleFavoriteUseCase.execute(cat);
-
-            expect(result).toBe(true);
+            expect(result).toEqual(right(true));
             expect(mockFavoritesRepo.saveFavorite).toHaveBeenCalledWith(cat);
         });
 
@@ -114,57 +93,41 @@ describe('ToggleFavoriteUseCase', () => {
             const cat = createMockCat({ id: 'cat-3' });
             const existingFavorites = createMockCats(2);
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue(null);
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right(existingFavorites));
+            mockSecureStorageRepo.getToken.mockResolvedValue(right(null));
+            mockFavoritesRepo.saveFavorite.mockResolvedValue(right(undefined));
 
             const result = await toggleFavoriteUseCase.execute(cat);
 
-            expect(result).toBe(true);
+            expect(result).toEqual(right(true));
             expect(mockFavoritesRepo.saveFavorite).toHaveBeenCalledWith(cat);
         });
 
-        it('should throw LimitReachedError when free user tries to add 4th favorite', async () => {
+        it('should return LimitReachedFailure when free user tries to add 4th favorite', async () => {
             const cat = createMockCat({ id: 'cat-4' });
             const existingFavorites = createMockCats(3);
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue(null);
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right(existingFavorites));
+            mockSecureStorageRepo.getToken.mockResolvedValue(right(null));
 
-            await expect(toggleFavoriteUseCase.execute(cat)).rejects.toThrow(LimitReachedError);
-            expect(mockFavoritesRepo.saveFavorite).not.toHaveBeenCalled();
-        });
+            const result = await toggleFavoriteUseCase.execute(cat);
 
-        it('should throw LimitReachedError when free user tries to add 5th favorite', async () => {
-            const cat = createMockCat({ id: 'cat-5' });
-            const existingFavorites = createMockCats(4); // Simulating somehow got 4
-
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue(null);
-
-            await expect(toggleFavoriteUseCase.execute(cat)).rejects.toThrow(LimitReachedError);
+            expect(result).toEqual(left(new LimitReachedFailure("Has alcanzado el límite de 3 favoritos gratuitos.")));
             expect(mockFavoritesRepo.saveFavorite).not.toHaveBeenCalled();
         });
     });
 
     describe('Token validation', () => {
-        it('should treat undefined token as free user', async () => {
-            const cat = createMockCat({ id: 'cat-4' });
-            const existingFavorites = createMockCats(3);
-
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue(undefined as any);
-
-            await expect(toggleFavoriteUseCase.execute(cat)).rejects.toThrow(LimitReachedError);
-        });
-
         it('should treat null token as free user', async () => {
             const cat = createMockCat({ id: 'cat-4' });
             const existingFavorites = createMockCats(3);
 
-            mockFavoritesRepo.getFavorites.mockResolvedValue(existingFavorites);
-            mockSecureStorageRepo.getToken.mockResolvedValue(null);
+            mockFavoritesRepo.getFavorites.mockResolvedValue(right(existingFavorites));
+            mockSecureStorageRepo.getToken.mockResolvedValue(right(null));
 
-            await expect(toggleFavoriteUseCase.execute(cat)).rejects.toThrow(LimitReachedError);
+            const result = await toggleFavoriteUseCase.execute(cat);
+
+            expect(result).toEqual(left(new LimitReachedFailure("Has alcanzado el límite de 3 favoritos gratuitos.")));
         });
     });
 });

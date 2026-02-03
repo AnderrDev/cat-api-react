@@ -1,6 +1,8 @@
 import { GetFavoritesUseCase } from '../GetFavoritesUseCase';
 import { FavoritesRepository } from '@domain/repositories';
 import { createMockCats } from '../../../../__tests__/utils/mockFactories';
+import { right, left } from 'fp-ts/Either';
+import { CacheFailure } from '@core/errors/Failure';
 
 describe('GetFavoritesUseCase', () => {
     let getFavoritesUseCase: GetFavoritesUseCase;
@@ -17,27 +19,30 @@ describe('GetFavoritesUseCase', () => {
     });
 
     it('should return empty array when no favorites exist', async () => {
-        mockFavoritesRepo.getFavorites.mockResolvedValue([]);
+        mockFavoritesRepo.getFavorites.mockResolvedValue(right([]));
 
         const result = await getFavoritesUseCase.execute();
 
-        expect(result).toEqual([]);
+        expect(result).toEqual(right([]));
         expect(mockFavoritesRepo.getFavorites).toHaveBeenCalledTimes(1);
     });
 
     it('should return list of favorites', async () => {
         const mockFavorites = createMockCats(3);
-        mockFavoritesRepo.getFavorites.mockResolvedValue(mockFavorites);
+        mockFavoritesRepo.getFavorites.mockResolvedValue(right(mockFavorites));
 
         const result = await getFavoritesUseCase.execute();
 
-        expect(result).toEqual(mockFavorites);
-        expect(result).toHaveLength(3);
+        expect(result).toEqual(right(mockFavorites));
+        expect(result).toHaveProperty('right.length', 3);
     });
 
     it('should propagate repository errors', async () => {
-        mockFavoritesRepo.getFavorites.mockRejectedValue(new Error('Storage error'));
+        const failure = new CacheFailure('Storage error');
+        mockFavoritesRepo.getFavorites.mockResolvedValue(left(failure));
 
-        await expect(getFavoritesUseCase.execute()).rejects.toThrow('Storage error');
+        const result = await getFavoritesUseCase.execute();
+
+        expect(result).toEqual(left(failure));
     });
 });

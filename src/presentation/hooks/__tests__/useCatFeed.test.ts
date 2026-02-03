@@ -2,6 +2,8 @@ import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { useCatFeed } from '../useCatFeed';
 import { useRepository } from '@core/di/DiContext';
 import { Cat, Breed } from '@domain/entities';
+import { right, left } from 'fp-ts/Either';
+import { NetworkFailure } from '@core/errors/Failure';
 
 jest.mock('@core/di/DiContext');
 
@@ -40,8 +42,8 @@ describe('useCatFeed', () => {
     });
 
     it('should initialize with loading state', () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue([]);
-        mockGetCatListUseCase.execute.mockResolvedValue([]);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right([]));
+        mockGetCatListUseCase.execute.mockResolvedValue(right([]));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -52,8 +54,8 @@ describe('useCatFeed', () => {
     });
 
     it('should load breeds and cats on mount', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -68,8 +70,8 @@ describe('useCatFeed', () => {
     });
 
     it('should handle errors when loading breeds', async () => {
-        mockGetBreedsUseCase.execute.mockRejectedValue(new Error('Breeds error'));
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(left(new NetworkFailure('Breeds error')));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -77,13 +79,13 @@ describe('useCatFeed', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(console.error).toHaveBeenCalledWith('Error loading breeds:', expect.any(Error));
+        expect(console.error).toHaveBeenCalledWith('Error loading breeds:', 'Breeds error');
         expect(result.current.breeds).toEqual([]);
     });
 
     it('should handle errors when loading cats', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockRejectedValue(new Error('Cats error'));
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(left(new NetworkFailure('Cats error')));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -91,13 +93,13 @@ describe('useCatFeed', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(console.error).toHaveBeenCalledWith('Error loading cats:', expect.any(Error));
+        expect(console.error).toHaveBeenCalledWith('Error loading cats:', 'Cats error');
         expect(result.current.cats).toEqual([]);
     });
 
     it('should filter cats by breed', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -106,7 +108,7 @@ describe('useCatFeed', () => {
         });
 
         const bengalCats = [mockCats[0]];
-        mockGetCatListUseCase.execute.mockResolvedValue(bengalCats);
+        mockGetCatListUseCase.execute.mockResolvedValue(right(bengalCats));
 
         act(() => {
             result.current.setSelectedBreedId('bengal');
@@ -121,8 +123,8 @@ describe('useCatFeed', () => {
     });
 
     it('should reset pagination when changing breed filter', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -131,7 +133,7 @@ describe('useCatFeed', () => {
         });
 
         // Load more pages
-        mockGetCatListUseCase.execute.mockResolvedValue([mockCats[0]]);
+        mockGetCatListUseCase.execute.mockResolvedValue(right([mockCats[0]]));
 
         act(() => {
             result.current.loadMore();
@@ -142,7 +144,7 @@ describe('useCatFeed', () => {
         });
 
         // Change breed filter
-        mockGetCatListUseCase.execute.mockResolvedValue([mockCats[1]]);
+        mockGetCatListUseCase.execute.mockResolvedValue(right([mockCats[1]]));
 
         act(() => {
             result.current.setSelectedBreedId('bengal');
@@ -154,8 +156,8 @@ describe('useCatFeed', () => {
     });
 
     it('should load more cats when scrolling', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValueOnce([mockCats[0], mockCats[1]]);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValueOnce(right([mockCats[0], mockCats[1]]));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -163,7 +165,7 @@ describe('useCatFeed', () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        mockGetCatListUseCase.execute.mockResolvedValueOnce([mockCats[2]]);
+        mockGetCatListUseCase.execute.mockResolvedValueOnce(right([mockCats[2]]));
 
         act(() => {
             result.current.loadMore();
@@ -177,8 +179,8 @@ describe('useCatFeed', () => {
     });
 
     it('should not load more when already loading', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -196,8 +198,8 @@ describe('useCatFeed', () => {
     });
 
     it('should not load more when no more data available', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValueOnce([mockCats[0]]);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValueOnce(right([mockCats[0]]));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -206,7 +208,7 @@ describe('useCatFeed', () => {
         });
 
         // Return empty array to indicate no more data
-        mockGetCatListUseCase.execute.mockResolvedValueOnce([]);
+        mockGetCatListUseCase.execute.mockResolvedValueOnce(right([]));
 
         act(() => {
             result.current.loadMore();
@@ -228,8 +230,8 @@ describe('useCatFeed', () => {
     });
 
     it('should refetch cats from page 0', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -240,7 +242,8 @@ describe('useCatFeed', () => {
         expect(result.current.cats).toHaveLength(3);
         const initialCallCount = mockGetCatListUseCase.execute.mock.calls.length;
 
-        mockGetCatListUseCase.execute.mockResolvedValue([...mockCats]);
+        // Reset the mock implementation for the next call to ensure it returns the same cats
+        mockGetCatListUseCase.execute.mockResolvedValue(right([...mockCats]));
 
         act(() => {
             result.current.refetch();
@@ -254,8 +257,8 @@ describe('useCatFeed', () => {
     });
 
     it('should clear cats when changing breed filter', async () => {
-        mockGetBreedsUseCase.execute.mockResolvedValue(mockBreeds);
-        mockGetCatListUseCase.execute.mockResolvedValue(mockCats);
+        mockGetBreedsUseCase.execute.mockResolvedValue(right(mockBreeds));
+        mockGetCatListUseCase.execute.mockResolvedValue(right(mockCats));
 
         const { result } = renderHook(() => useCatFeed());
 
@@ -266,7 +269,7 @@ describe('useCatFeed', () => {
         expect(result.current.cats).toHaveLength(3);
 
         // Change breed filter resets everything
-        mockGetCatListUseCase.execute.mockResolvedValue([mockCats[0]]);
+        mockGetCatListUseCase.execute.mockResolvedValue(right([mockCats[0]]));
 
         act(() => {
             result.current.setSelectedBreedId('bengal');

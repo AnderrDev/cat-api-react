@@ -1,7 +1,10 @@
 import { useRepository } from '@core/di/DiContext';
-import { Cat, LimitReachedError } from '@domain/entities';
+import { Cat } from '@domain/entities';
 import { useCallback, useEffect, useState } from 'react';
 import { logger } from '@core/utils';
+import { pipe } from 'fp-ts/function';
+import { fold } from 'fp-ts/Either';
+import { LimitReachedFailure } from '@core/errors/Failure';
 
 export const useManageFavorites = () => {
     const { getFavoritesUseCase, toggleFavoriteUseCase } = useRepository();
@@ -12,15 +15,22 @@ export const useManageFavorites = () => {
 
     // 2. Load favorites on mount
     const loadFavorites = useCallback(async () => {
-        try {
-            logger.debug('Loading favorites', 'useManageFavorites');
-            const data = await getFavoritesUseCase.execute();
-            setFavorites(data);
-            logger.info('Favorites loaded successfully', 'useManageFavorites', { count: data.length });
-        } catch (e) {
-            const error = e instanceof Error ? e : new Error('Unknown error');
-            logger.error('Error loading favorites', error, 'useManageFavorites');
-        }
+        logger.debug('Loading favorites', 'useManageFavorites');
+        const result = await getFavoritesUseCase.execute();
+
+        pipe(
+            result,
+            fold(
+                (failure) => {
+                    logger.error('Error loading favorites', new Error(failure.message), 'useManageFavorites');
+                    setError(new Error(failure.message));
+                },
+                (data) => {
+                    setFavorites(data);
+                    logger.info('Favorites loaded successfully', 'useManageFavorites', { count: data.length });
+                }
+            )
+        );
     }, [getFavoritesUseCase]);
 
     useEffect(() => {
@@ -30,34 +40,41 @@ export const useManageFavorites = () => {
     // 3. Function to toggle favorite (Manual mutation)
     const toggleFavorite = async (cat: Cat) => {
         setError(null); // Reset error
-        try {
-            logger.info('Toggling favorite', 'useManageFavorites', { catId: cat.id });
 
-            // Attempt the operation (may fail due to limit)
-            const isNowFavorite = await toggleFavoriteUseCase.execute(cat);
+        logger.info('Toggling favorite', 'useManageFavorites', { catId: cat.id });
 
-            // Optimistic Update or Reload
-            // In this case, reload the list to ensure consistency with saved data
-            await loadFavorites();
+        // Attempt the operation
+        const result = await toggleFavoriteUseCase.execute(cat);
 
-            logger.info('Favorite toggled successfully', 'useManageFavorites', {
-                catId: cat.id,
-                isNowFavorite
-            });
+        return pipe(
+            result,
+            fold(
+                (failure) => {
+                    logger.debug(`Failure type: ${failure.constructor.name}, instanceof LimitReachedFailure: ${failure instanceof LimitReachedFailure}`, 'useManageFavorites');
+                    if (failure instanceof LimitReachedFailure) {
+                        logger.warn('Favorite limit reached for free user', 'useManageFavorites', { catId: cat.id });
+                        // Re-throw to propagate to UI/Alerts
+                        throw failure;
+                    }
+                    const err = new Error(failure.message);
+                    logger.error('Error toggling favorite', err, 'useManageFavorites', { catId: cat.id });
+                    setError(err);
+                    throw err;
+                },
+                async (isNowFavorite) => {
+                    // Reload the list to ensure consistency with saved data
+                    // Note: We should probably wait for this or optimistic update.
+                    // For now, fire and forget loadFavorites to update list
+                    await loadFavorites();
 
-            return isNowFavorite;
-        } catch (err) {
-            // Handle specific error
-            if (err instanceof LimitReachedError) {
-                logger.warn('Favorite limit reached for free user', 'useManageFavorites', { catId: cat.id });
-                // Propagate error for UI to handle (Alerts, etc)
-                throw err;
-            }
-            const error = err instanceof Error ? err : new Error('Unknown Error');
-            logger.error('Error toggling favorite', error, 'useManageFavorites', { catId: cat.id });
-            setError(error);
-            throw err;
-        }
+                    logger.info('Favorite toggled successfully', 'useManageFavorites', {
+                        catId: cat.id,
+                        isNowFavorite
+                    });
+                    return isNowFavorite;
+                }
+            )
+        );
     };
 
     // Helper for UI

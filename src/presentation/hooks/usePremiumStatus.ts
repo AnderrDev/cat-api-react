@@ -1,6 +1,8 @@
 import { useRepository } from '@core/di/DiContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
+import { pipe } from 'fp-ts/function';
+import { fold } from 'fp-ts/Either';
 
 export const usePremiumStatus = () => {
     const { getPremiumStatusUseCase } = useRepository();
@@ -12,17 +14,22 @@ export const usePremiumStatus = () => {
             let isActive = true;
 
             const checkStatus = async () => {
-                try {
-                    const status = await getPremiumStatusUseCase.execute();
-                    if (isActive) {
-                        setIsPremium(status);
-                    }
-                } catch (error) {
-                    console.error("Error checking premium status:", error);
-                } finally {
-                    if (isActive) {
-                        setIsLoading(false);
-                    }
+                const result = await getPremiumStatusUseCase.execute();
+
+                pipe(
+                    result,
+                    fold(
+                        (failure) => console.error("Error checking premium status:", failure.message),
+                        (status) => {
+                            if (isActive) {
+                                setIsPremium(status);
+                            }
+                        }
+                    )
+                );
+
+                if (isActive) {
+                    setIsLoading(false);
                 }
             };
             checkStatus();

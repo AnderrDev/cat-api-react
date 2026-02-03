@@ -1,5 +1,7 @@
 import { PaymentRepository, SecureStorageRepository } from '@domain/repositories';
 import { CreditCard, SecurityToken } from '@domain/entities';
+import { Either, isLeft, right } from 'fp-ts/Either';
+import { Failure } from '@core/errors/Failure';
 
 export class TokenizePaymentMethodUseCase {
     constructor(
@@ -7,9 +9,11 @@ export class TokenizePaymentMethodUseCase {
         private secureStorageRepository: SecureStorageRepository // We also need to save the token
     ) { }
 
-    async execute(card: CreditCard): Promise<SecurityToken> {
+    async execute(card: CreditCard): Promise<Either<Failure, SecurityToken>> {
         // 1. Get token from provider (Mock)
-        const token = await this.paymentRepository.tokenizeCard(card);
+        const tokenResult = await this.paymentRepository.tokenizeCard(card);
+        if (isLeft(tokenResult)) return tokenResult;
+        const token = tokenResult.right;
 
         // 2. Save secure token + Card Info
         const cardInfo = {
@@ -19,11 +23,12 @@ export class TokenizePaymentMethodUseCase {
             expiration: card.expirationDate,
         };
 
-        await this.secureStorageRepository.savePaymentDetails({
+        const saveResult = await this.secureStorageRepository.savePaymentDetails({
             token,
             cardInfo
         });
+        if (isLeft(saveResult)) return saveResult;
 
-        return token;
+        return right(token);
     }
 }

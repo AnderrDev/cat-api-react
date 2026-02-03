@@ -1,5 +1,7 @@
 import { RemovePremiumUseCase } from '../RemovePremiumUseCase';
 import { SecureStorageRepository } from '@domain/repositories';
+import { right, left } from 'fp-ts/Either';
+import { StorageFailure } from '@core/errors/Failure';
 
 describe('RemovePremiumUseCase', () => {
     let removePremiumUseCase: RemovePremiumUseCase;
@@ -17,17 +19,20 @@ describe('RemovePremiumUseCase', () => {
     });
 
     it('should clear token from secure storage', async () => {
-        mockSecureStorageRepo.clearToken.mockResolvedValue(undefined);
+        mockSecureStorageRepo.clearToken.mockResolvedValue(right(undefined));
 
-        await removePremiumUseCase.execute();
+        const result = await removePremiumUseCase.execute();
 
         expect(mockSecureStorageRepo.clearToken).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(right(undefined));
     });
 
     it('should propagate errors from repository', async () => {
-        const error = new Error('Storage error');
-        mockSecureStorageRepo.clearToken.mockRejectedValue(error);
+        const failure = new StorageFailure('Storage error');
+        mockSecureStorageRepo.clearToken.mockResolvedValue(left(failure));
 
-        await expect(removePremiumUseCase.execute()).rejects.toThrow('Storage error');
+        const result = await removePremiumUseCase.execute();
+
+        expect(result).toEqual(left(failure));
     });
 });

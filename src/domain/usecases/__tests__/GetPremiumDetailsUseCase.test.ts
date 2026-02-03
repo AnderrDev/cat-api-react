@@ -1,6 +1,8 @@
 import { GetPremiumDetailsUseCase } from '../GetPremiumDetailsUseCase';
 import { SecureStorageRepository } from '@domain/repositories';
 import { StoredPaymentDetails } from '@domain/entities';
+import { right, left } from 'fp-ts/Either';
+import { StorageFailure } from '@core/errors/Failure';
 
 describe('GetPremiumDetailsUseCase', () => {
     let getPremiumDetailsUseCase: GetPremiumDetailsUseCase;
@@ -27,27 +29,29 @@ describe('GetPremiumDetailsUseCase', () => {
                 expiration: '12/25'
             }
         };
-        mockSecureStorageRepo.getPaymentDetails.mockResolvedValue(mockDetails);
+        mockSecureStorageRepo.getPaymentDetails.mockResolvedValue(right(mockDetails));
 
         const result = await getPremiumDetailsUseCase.execute();
 
-        expect(result).toEqual(mockDetails);
+        expect(result).toEqual(right(mockDetails));
         expect(mockSecureStorageRepo.getPaymentDetails).toHaveBeenCalledTimes(1);
     });
 
     it('should return null when no payment details exist', async () => {
-        mockSecureStorageRepo.getPaymentDetails.mockResolvedValue(null);
+        mockSecureStorageRepo.getPaymentDetails.mockResolvedValue(right(null));
 
         const result = await getPremiumDetailsUseCase.execute();
 
-        expect(result).toBeNull();
+        expect(result).toEqual(right(null));
         expect(mockSecureStorageRepo.getPaymentDetails).toHaveBeenCalledTimes(1);
     });
 
     it('should propagate errors from repository', async () => {
-        const error = new Error('Storage error');
-        mockSecureStorageRepo.getPaymentDetails.mockRejectedValue(error);
+        const failure = new StorageFailure('Storage error');
+        mockSecureStorageRepo.getPaymentDetails.mockResolvedValue(left(failure));
 
-        await expect(getPremiumDetailsUseCase.execute()).rejects.toThrow('Storage error');
+        const result = await getPremiumDetailsUseCase.execute();
+
+        expect(result).toEqual(left(failure));
     });
 });

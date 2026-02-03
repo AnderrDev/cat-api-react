@@ -1,5 +1,7 @@
 import { GetPremiumStatusUseCase } from '../GetPremiumStatusUseCase';
 import { SecureStorageRepository } from '@domain/repositories';
+import { right, left } from 'fp-ts/Either';
+import { StorageFailure } from '@core/errors/Failure';
 
 describe('GetPremiumStatusUseCase', () => {
     let getPremiumStatusUseCase: GetPremiumStatusUseCase;
@@ -17,35 +19,30 @@ describe('GetPremiumStatusUseCase', () => {
     });
 
     it('should return true when token exists', async () => {
-        mockSecureStorageRepo.getToken.mockResolvedValue({
+        mockSecureStorageRepo.getToken.mockResolvedValue(right({
             accessToken: 'premium-token',
             createdAt: Date.now(),
-        });
+        }));
 
         const result = await getPremiumStatusUseCase.execute();
 
-        expect(result).toBe(true);
+        expect(result).toEqual(right(true));
     });
 
     it('should return false when token is null', async () => {
-        mockSecureStorageRepo.getToken.mockResolvedValue(null);
+        mockSecureStorageRepo.getToken.mockResolvedValue(right(null));
 
         const result = await getPremiumStatusUseCase.execute();
 
-        expect(result).toBe(false);
-    });
-
-    it('should return false when token is undefined', async () => {
-        mockSecureStorageRepo.getToken.mockResolvedValue(undefined as any);
-
-        const result = await getPremiumStatusUseCase.execute();
-
-        expect(result).toBe(false);
+        expect(result).toEqual(right(false));
     });
 
     it('should handle repository errors gracefully', async () => {
-        mockSecureStorageRepo.getToken.mockRejectedValue(new Error('Keychain error'));
+        const failure = new StorageFailure('Keychain error');
+        mockSecureStorageRepo.getToken.mockResolvedValue(left(failure));
 
-        await expect(getPremiumStatusUseCase.execute()).rejects.toThrow('Keychain error');
+        const result = await getPremiumStatusUseCase.execute();
+
+        expect(result).toEqual(left(failure));
     });
 });

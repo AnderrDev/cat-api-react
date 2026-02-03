@@ -2,6 +2,8 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { usePremiumStatus } from '../usePremiumStatus';
 import { useRepository } from '@core/di/DiContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { right, left } from 'fp-ts/Either';
+import { NetworkFailure } from '@core/errors/Failure';
 
 jest.mock('@core/di/DiContext');
 jest.mock('@react-navigation/native', () => ({
@@ -26,7 +28,7 @@ describe('usePremiumStatus', () => {
     });
 
     it('should initialize with loading state', () => {
-        mockGetPremiumStatusUseCase.execute.mockResolvedValue(false);
+        mockGetPremiumStatusUseCase.execute.mockResolvedValue(right(false));
 
         const { result } = renderHook(() => usePremiumStatus());
 
@@ -35,7 +37,7 @@ describe('usePremiumStatus', () => {
     });
 
     it('should load premium status successfully', async () => {
-        mockGetPremiumStatusUseCase.execute.mockResolvedValue(true);
+        mockGetPremiumStatusUseCase.execute.mockResolvedValue(right(true));
 
         const { result } = renderHook(() => usePremiumStatus());
 
@@ -48,7 +50,7 @@ describe('usePremiumStatus', () => {
     });
 
     it('should handle non-premium status', async () => {
-        mockGetPremiumStatusUseCase.execute.mockResolvedValue(false);
+        mockGetPremiumStatusUseCase.execute.mockResolvedValue(right(false));
 
         const { result } = renderHook(() => usePremiumStatus());
 
@@ -61,7 +63,8 @@ describe('usePremiumStatus', () => {
 
     it('should handle errors gracefully', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-        mockGetPremiumStatusUseCase.execute.mockRejectedValue(new Error('Network error'));
+        const error = new NetworkFailure('Network error');
+        mockGetPremiumStatusUseCase.execute.mockResolvedValue(left(error));
 
         const { result } = renderHook(() => usePremiumStatus());
 
@@ -71,7 +74,7 @@ describe('usePremiumStatus', () => {
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             'Error checking premium status:',
-            expect.any(Error)
+            expect.any(String) // or implementation dependent
         );
         expect(result.current.isPremium).toBe(false);
 
@@ -86,7 +89,7 @@ describe('usePremiumStatus', () => {
         });
 
         mockGetPremiumStatusUseCase.execute.mockImplementation(
-            () => new Promise(resolve => setTimeout(() => resolve(true), 100))
+            () => new Promise(resolve => setTimeout(() => resolve(right(true)), 100))
         );
 
         const { unmount } = renderHook(() => usePremiumStatus());

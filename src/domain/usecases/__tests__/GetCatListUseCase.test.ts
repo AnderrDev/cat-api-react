@@ -1,6 +1,8 @@
 import { GetCatListUseCase } from '../GetCatListUseCase';
 import { CatRepository } from '@domain/repositories';
 import { createMockCats } from '../../../../__tests__/utils/mockFactories';
+import { right, left } from 'fp-ts/Either';
+import { NetworkFailure } from '@core/errors/Failure';
 
 describe('GetCatListUseCase', () => {
     let getCatListUseCase: GetCatListUseCase;
@@ -17,37 +19,37 @@ describe('GetCatListUseCase', () => {
 
     it('should return cats with default limit', async () => {
         const mockCats = createMockCats(10);
-        mockCatRepository.getCats.mockResolvedValue(mockCats);
+        mockCatRepository.getCats.mockResolvedValue(right(mockCats));
 
         const result = await getCatListUseCase.execute(0);
 
-        expect(result).toEqual(mockCats);
+        expect(result).toEqual(right(mockCats));
         expect(mockCatRepository.getCats).toHaveBeenCalledWith(0, 10, undefined);
     });
 
     it('should return cats with custom limit', async () => {
         const mockCats = createMockCats(20);
-        mockCatRepository.getCats.mockResolvedValue(mockCats);
+        mockCatRepository.getCats.mockResolvedValue(right(mockCats));
 
         const result = await getCatListUseCase.execute(1, 20);
 
-        expect(result).toEqual(mockCats);
+        expect(result).toEqual(right(mockCats));
         expect(mockCatRepository.getCats).toHaveBeenCalledWith(1, 20, undefined);
     });
 
     it('should filter by breed when provided', async () => {
         const mockCats = createMockCats(5);
-        mockCatRepository.getCats.mockResolvedValue(mockCats);
+        mockCatRepository.getCats.mockResolvedValue(right(mockCats));
 
         const result = await getCatListUseCase.execute(0, 10, 'siamese');
 
-        expect(result).toEqual(mockCats);
+        expect(result).toEqual(right(mockCats));
         expect(mockCatRepository.getCats).toHaveBeenCalledWith(0, 10, 'siamese');
     });
 
     it('should handle pagination correctly', async () => {
         const mockCats = createMockCats(10);
-        mockCatRepository.getCats.mockResolvedValue(mockCats);
+        mockCatRepository.getCats.mockResolvedValue(right(mockCats));
 
         await getCatListUseCase.execute(2, 15, 'persian');
 
@@ -55,9 +57,11 @@ describe('GetCatListUseCase', () => {
     });
 
     it('should propagate errors from repository', async () => {
-        const error = new Error('Network error');
-        mockCatRepository.getCats.mockRejectedValue(error);
+        const failure = new NetworkFailure('Network error');
+        mockCatRepository.getCats.mockResolvedValue(left(failure));
 
-        await expect(getCatListUseCase.execute(0, 10)).rejects.toThrow('Network error');
+        const result = await getCatListUseCase.execute(0, 10);
+
+        expect(result).toEqual(left(failure));
     });
 });
